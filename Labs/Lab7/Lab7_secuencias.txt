@@ -1,0 +1,30 @@
+IE3059 - Electrónica Digital 3
+Laboratorio 7
+Secuencia de instrucciones para las luces
+Luis Alberto Rivera
+
+Segunda Parte:
+
+Para la política de escalonamiento: usar SCHED_RR
+
+Luces 1 y 2:
+	ciclo
+		wait(semáforo)
+		Encender luz (sólo la de este hilo) por un cierto tiempo
+		Apagar luz (sólo la de este hilo)
+		post(semáforo)
+		pequeño sleep (ej. 1 ms) (usleep(1000);)
+	fin de ciclo
+
+Luz peatonal:
+	ciclo
+		wait(semáforo)
+		revisar estatus del botón
+		Si se había presionado
+			Encender luz (sólo la de este hilo) por un cierto tiempo
+			Apagar luz (sólo la de este hilo)
+			resetear estatus del botón
+
+		post(semáforo)
+		pequeño sleep (ej. 1 ms) (usleep(1000);)
+	fin de ciclo
