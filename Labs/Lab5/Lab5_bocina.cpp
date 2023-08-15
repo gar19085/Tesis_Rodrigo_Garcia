@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <wiringPi.h>
-#include <pthread.h>
+#include <thread>
 
 #define SPKR 22
 #define BTN1 27
@@ -13,14 +13,13 @@ void *teclado(void *ptr) {
     while (*input != 's') {
         std::cin >> *input;
     }
-.
-    pthread_exit(nullptr);
+    
 }
 
 int main() {
     char opcion = 'r';
     int boton = LOW;
-    pthread_t teclado_thr;
+    std::thread teclado_thr(teclado);
 
     if (wiringPiSetup() == -1) {
         std::cerr << "Error initializing WiringPi." << std::endl;
@@ -44,7 +43,9 @@ int main() {
     std::cout << "\np - pausar\nr - reanudar\ns - salir del programa\n\n";
     std::cout.flush();
 
-    pthread_create(&teclado_thr, nullptr, teclado, &opcion);
+    teclado_thr std::thread(teclado, static_cast<void *>(ptr));
+
+    //pthread_create(&teclado_thr, nullptr, teclado, &opcion);
 
     while (opcion != 's') {
         if (opcion == 'r') {
@@ -57,8 +58,8 @@ int main() {
         }
     }
 
-    pthread_join(teclado_thr, nullptr);
-
+    //pthread_join(teclado_thr, nullptr);
+    teclado_thr.join();
     std::cout << "Saliendo del programa..." << std::endl << std::endl;
 
     return 0;
