@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include <thread>
+#include <chrono>
 
 #define SPKR 22
 #define BTN1 27
@@ -36,7 +37,7 @@ int main() {
 
     while (!boton) {
         boton = digitalRead(BTN1);
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 
     std::cout << "Opciones del teclado:" << std::endl;
@@ -54,7 +55,7 @@ int main() {
             delay(1);
             digitalWrite(SPKR, LOW);
         } else {
-            usleep(1000);
+            std::this_thread::sleep_for(std::chrono::microseconds(1000));
         }
     }
 
