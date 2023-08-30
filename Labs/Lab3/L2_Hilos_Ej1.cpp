@@ -1,9 +1,15 @@
-#include <iostream>
-#include <thread>  
-#include <chrono>  
+/*
+ ============================================================================
+ Nombre: L3_Hilos_Ej1.cpp
+ Autor:  Rodrigo José García Ambrosy
+ ============================================================================
+ */
+#include <iostream> //Librería estándar de entrada/salida
+#include <thread>   //Librería para utilizar hilos
+#include <chrono>   //Librería para manejo de tiempos
 
 
-// Código a ejecutar por el segundo hilo
+// Codigo a ejecutar por el segundo hilo
 void My_Thread()
 {
     std::cout << "No soy el primer hilo." << std::endl;
