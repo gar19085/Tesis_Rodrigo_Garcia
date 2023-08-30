@@ -1,0 +1,4 @@
+g++ -std=c++11 Lab6_files_y_strings.cpp -o Lab6_files_y_strings
+
+Usa el standar de C++11
+Codigo para usar el "constexpr"

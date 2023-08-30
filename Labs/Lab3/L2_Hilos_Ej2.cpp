@@ -1,34 +1,41 @@
-#include <iostream>
-#include <thread>
-#include <chrono>
+/*
+ ============================================================================
+ Nombre: L2_Hilos_Ej2.cpp
+ Autor:  Rodrigo José García Ambrosy
+ ============================================================================
+ */
 
-void My_Thread(void *ptr)
+#include <iostream> //Librería estándar de entrada/salida
+#include <thread>   //Librería para utilizar hilos
+#include <chrono>   //Librería para manejo de tiempos
+
+void My_Thread(void *ptr)//Función que se ejecutara por el hilo
 {
     char *message;
-    message = static_cast<char *>(ptr);
+    message = static_cast<char *>(ptr); //Se convierte el puntero void* a char*
 
     while (true)
     {
-        std::cout << message;
-        std::cout.flush();
-        std::this_thread::sleep_for(std::chrono::microseconds(1100000));
+        std::cout << message; //Se imprime el mensaje
+        std::cout.flush();    //Limpieza de búfer de salida
+        std::this_thread::sleep_for(std::chrono::microseconds(1100000)); //Configuración para pausar por 1.1 segundos
     }
 }
 
 int main()
 {
-    std::thread thread2;
-    char *message1 = const_cast<char *>("Hello ");
-    char *message2 = "World\n";
+    std::thread thread2; //Se declara una variable para el hilo
+    char *message1 = const_cast<char *>("Hello "); //Puntero a "Hello "
+    char *message2 = "World\n"; //Puntero a "World"
 
-    thread2 = std::thread(My_Thread, static_cast<void *>(message1));
+    thread2 = std::thread(My_Thread, static_cast<void *>(message1)); //Se crea el hilo y se pasa el mensaje "Hello "
 
     while (true)
     {
-        std::cout << message2;
-        std::cout.flush();
-        std::this_thread::sleep_for(std::chrono::microseconds(1000000));
+        std::cout << message2; //Se imprime el mensaje "World"
+        std::cout.flush();     //Limpieza de búfer de salida
+        std::this_thread::sleep_for(std::chrono::microseconds(1000000)); //Pausa de 1 segundo
     }
 
-    return 0;
+    return 0; //Indicador para salidas exitosas
 }

@@ -1,5 +1,6 @@
-#include <iostream>  // Inclusión de cabecera para entrada/salida en C++
-#include <thread>  // Inclusión de cabecera para usar usleep (opcional en C++)
+#include <iostream> 
+#include <thread>  
+#include <chrono>
 int main()
 {
     while (1)

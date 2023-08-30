@@ -1,6 +1,6 @@
 #include <iostream>
-#include <thread>  // Inclusión de cabecera para utilizar std::thread
-#include <chrono>  // Inclusión de cabecera para utilizar std::this_thread::sleep_for
+#include <thread>  
+#include <chrono>  
 
 
 // Código a ejecutar por el segundo hilo

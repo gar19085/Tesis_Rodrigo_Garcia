@@ -1,4 +1,19 @@
 #include <iostream>
+#include <ctime>
+#include <cstdio>
+#include <cstdlib>
+#include <thread>
+#include <chrono>
+#include <string>
+#include <cerrno>
+#include <sys/timerfd.h>
+#include <unistd.h>
+#include <linux/types.h>
+#include <sched.h>
+
+
+#include <fcntl.h>
+#include <getopt.h>
 
 
 #define MI_PRIORIDAD 10  // Rango entre 1 y 99. A mayor valor, más alta la prioridad

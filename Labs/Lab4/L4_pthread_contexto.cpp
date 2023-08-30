@@ -14,7 +14,7 @@ void My_thread(){
         counter++;
         std::cout << "My_thread: " << counter << std::endl;
         std::cout.flush();
-        usleep(1100000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1100000));
     }
 }
 
@@ -29,7 +29,7 @@ int main(){
         counter++;
         std::cout << "ParentThread: " << counter << std::endl;
         std::cout.flush();
-        usleep(1000000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000000));
     }
          
 }
