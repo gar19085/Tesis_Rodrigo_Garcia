@@ -15,7 +15,7 @@
 #define LUZ_P  5
 #define BTN1   16
 
-class ButtonHandler { //Se crea una clase para el control del boton
+class ButtonHandler { //Se crea una clase para el control del botón
 public:
     ButtonHandler() {
         pinMode(BTN1, INPUT);
@@ -23,12 +23,12 @@ public:
     }
 
     bool isButtonPressed() {
-        return digitalRead(BTN1) == HIGH;
+        return digitalRead(BTN1) == HIGH; // Devuelve true si el botón está presionado
     }
 
     void waitForButtonRelease() {
         while (isButtonPressed()) {
-            // Se espera a que el boton se suelte
+            // Se espera a que el botón se suelte
         }
     }
 };
