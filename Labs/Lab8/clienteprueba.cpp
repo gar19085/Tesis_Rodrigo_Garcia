@@ -1,9 +1,3 @@
-/*
- ============================================================================
- Nombre: Lab8_cliente.cpp
- Autor:  Rodrigo José García Ambrosy
- ============================================================================
- */
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>

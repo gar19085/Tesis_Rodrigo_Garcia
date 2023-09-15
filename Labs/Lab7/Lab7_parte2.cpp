@@ -1,7 +1,7 @@
 /*
  ============================================================================
- Nombre: Lab6_files_y_strings.cpp
- Autor:  Rodrigo Jose Garcia Ambrosy
+ Nombre: Lab7_parte2.cpp
+ Autor:  Rodrigo José García Ambrosy
  ============================================================================
  */
 #include <iostream>

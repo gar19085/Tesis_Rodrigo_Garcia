@@ -1,3 +1,9 @@
+/*
+ ============================================================================
+ Nombre: Lab8_servidor.cpp
+ Autor:  Rodrigo José García Ambrosy
+ ============================================================================
+ */
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
