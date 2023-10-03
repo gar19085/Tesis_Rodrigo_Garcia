@@ -9,8 +9,10 @@
 #include <thread>   //Librería para utilizar hilos
 #include <chrono>   //Librería para manejo de tiempos
 
-void My_Thread(void *ptr)//Función que se ejecutara por el hilo
+void My_Thread(void *ptr)
 {
+    // La función que se ejecutará por el hilo.
+    // El parámetro ptr es un puntero a un mensaje que se imprimirá.
     char *message;
     message = static_cast<char *>(ptr); //Se convierte el puntero void* a char*
 
@@ -25,11 +27,11 @@ void My_Thread(void *ptr)//Función que se ejecutara por el hilo
 int main()
 {
     std::thread thread2; //Se declara una variable para el hilo
-    char *message1 = const_cast<char *>("Hello "); //Puntero a "Hello "
+    char *message1 = const_cast<char *>("Hello "); //Puntero a "Hello " (constante)
     char *message2 = "World\n"; //Puntero a "World"
 
     thread2 = std::thread(My_Thread, static_cast<void *>(message1)); //Se crea el hilo y se pasa el mensaje "Hello "
-
+    
     while (true)
     {
         std::cout << message2; //Se imprime el mensaje "World"

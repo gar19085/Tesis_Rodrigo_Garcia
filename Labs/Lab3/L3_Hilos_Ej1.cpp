@@ -9,7 +9,7 @@
 #include <chrono>   //Librería para manejo de tiempos
 
 
-// Codigo a ejecutar por el segundo hilo
+// Código a ejecutar por el segundo hilo
 void My_Thread()
 {
     std::cout << "No soy el primer hilo." << std::endl;
@@ -27,7 +27,7 @@ int main()
 
     std::cout << "Soy el primer hilo." << std::endl;
     std::cout.flush();
-    // La función join espera que el hilo indicado termine (bloquea).
+    // La función join espera a que el hilo indicado termine (bloquea el hilo principal).
     thread2.join();
 
     std::cout << "Después de que el 2do hilo haya terminado." << std::endl;

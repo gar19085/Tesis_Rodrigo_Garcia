@@ -4,73 +4,73 @@
  Autor:  Rodrigo José García Ambrosy
  ============================================================================
  */
-#include <iostream>
-#include <cstdlib>
-#include <ctime>
-#include <cstring>
-#include <cstdio>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <sstream> 
+#include <iostream>	// Librería estándar de entrada/salida
+#include <cstdlib>	// Librería estándar para funciones generales
+#include <ctime>	// Librería para utilizar la función time
+#include <cstring>	// Librería para la manipulación de cadenas
+#include <cstdio>	// Librería para utilizar la función sprintf
+#include <unistd.h>	// Librería que proporciona funciones y constantes específicas de sistemas Unix.
+#include <fcntl.h>	// Librería para utilizar la función open
+#include <sys/types.h>	// Librería para definir tipos de datos
+#include <netdb.h>	// Librería para definir estructuras que almacenan información sobre hosts
+#include <sys/socket.h>	// Librería para utilizar sockets
+#include <arpa/inet.h>	// Librería para manipular direcciones IP
+#include <sstream> 		// Librería para utilizar la función stringstream
 
-#define OPCION_IP 1
-#define TRUE 1
-#define FALSE 0
-#define MSG_SIZE 60
-#define VOTO_MAX 15
-#define IP_LENGTH 15
-#define PORT 2000
+#define OPCION_IP 1 // 0 para IP de broadcast, 1 para IP de archivo, 2 para IP de argumento
+#define TRUE 1	// Definición de TRUE
+#define FALSE 0	// Definición de FALSE
+#define MSG_SIZE 60	// Tamaño del mensaje
+#define VOTO_MAX 15	// Voto máximo
+#define IP_LENGTH 15	// Tamaño de la dirección IP
+#define PORT 2000	// Puerto de comunicación
 
-int getIP(char *);
+int getIP(char *);	// Función para obtener la dirección IP
 
-void error(const char *msg)
+void error(const char *msg) // Función para imprimir errores
 {
     perror(msg);
     exit(0);
 }
 
-int main(int argc, char *argv[]){
-    int sockfd, n;
-    unsigned int length;
-    struct sockaddr_in addr, broadcast_addr;
-    char messg[MSG_SIZE], messg_temp[MSG_SIZE];
-    int myvote = 0, myIP, incomingIP, in_vote = 0;
-    int boolval = TRUE, master = FALSE;
-    char *vote_tokens;
-    char IP_buffer[IP_LENGTH], IP_temp[IP_LENGTH], IP_broadcast[IP_LENGTH];
-    int puerto = PORT;
-    FILE *file;
+int main(int argc, char *argv[]){ // Función principal
+    int sockfd, n; // Declaración de variables
+    unsigned int length; 
+    struct sockaddr_in addr, broadcast_addr; // Estructuras para almacenar las direcciones
+    char messg[MSG_SIZE], messg_temp[MSG_SIZE]; // Variables para almacenar el mensaje
+    int myvote = 0, myIP, incomingIP, in_vote = 0; // Variables para almacenar el voto y la dirección IP
+    int boolval = TRUE, master = FALSE; // Variables para configurar el socket
+    char *vote_tokens;  // Variable para almacenar el voto
+    char IP_buffer[IP_LENGTH], IP_temp[IP_LENGTH], IP_broadcast[IP_LENGTH]; // Variables para almacenar la dirección IP
+    int puerto = PORT; // Variable para almacenar el puerto
+    FILE *file; // Declaración del archivo
 
-    if (argc > 2)
+    if (argc > 2) // Verifica si se ingresó el puerto
     {
         std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
         exit(1);
     }
 
-    if (argc == 2)
+    if (argc == 2) 
         puerto = std::atoi(argv[1]);
     
-#if OPCION_IP == 0
+#if OPCION_IP == 0 //
 // --- hard coded -------------------------------------------------------------
 	strcpy(IP_buffer, "10.0.0.22");
 	strcpy(IP_broadcast, "10.0.0.255");
 #endif
 
-#if (OPCION_IP == 1) || (OPCION_IP == 2)
-// ----- get the IP address and save to a file (ipaddr) using ifconfig --------
+#if (OPCION_IP == 1) || (OPCION_IP == 2) 
+// ----- Obtener la dirección IP y guardarla en un archivo (ipaddr) usando ifconfig --------
 	
-#if OPCION_IP == 1
+#if OPCION_IP == 1 // Se obtiene la IP de wlan0
 	system("ifconfig wlan0 | grep 'inet ' | awk '{ print $2 }' > ipaddr");
 #else
 	system("ifconfig enp0s31f6 | grep 'inet ' | awk '{ print $2 }' > ipaddr");
 #endif
 
-	file = fopen("ipaddr", "r");	// open file with the IP address
-	if(file == NULL)
+	file = fopen("ipaddr", "r");	// Abre el archivo con la IP
+	if(file == NULL) // Verifica si se abrio el archivo
 	{
 		std::cout << "Error opening file" << std::endl;
 		exit(-1);
@@ -80,32 +80,33 @@ int main(int argc, char *argv[]){
 		fscanf(file, "%s", IP_buffer);
 	}
 
-	fclose(file);					// close file
+	fclose(file);					// Cierra el archivo
     
-// --- get the broadcast address and save it to the ipaddr file ---
+// --- Obtener la dirección de broadcast y guardarla en el archivo ipaddr ---
 #if OPCION_IP == 1
-	system("ifconfig wlan0 | grep 'inet ' | awk '{ print $6 }' > ipaddr");
+	system("ifconfig wlan0 | grep 'inet ' | awk '{ print $6 }' > ipaddr"); // Ejecutar comando para obtener la dirección de broadcast
 #else
-	system("ifconfig enp0s31f6 | grep 'inet ' | awk '{ print $6 }' > ipaddr");
+	system("ifconfig enp0s31f6 | grep 'inet ' | awk '{ print $6 }' > ipaddr"); 
 #endif
 
-	file = fopen("ipaddr", "r");	// open file with the broadcast address
+	file = fopen("ipaddr", "r");	// Abrir archivo con la dirección de broadcast
 	if(file == NULL)
 	{
-		std::cout << "Error opening file" << std::endl;;
+		std::cout << "Error al abrir el archivo" << std::endl;;
 		exit(-1);
 	}
 	else
 	{
-		fscanf(file, "%s", IP_broadcast);
+		fscanf(file, "%s", IP_broadcast); // Leer la dirección de broadcast del archivo
 	}
 
-	fclose(file);					// close file
-	system("rm ipaddr");			// make sure to remove file when done
+	fclose(file);					// Cerrar archivo
+	system("rm ipaddr");			// Asegurarse de eliminar el archivo cuando se termine
+
 #endif
 
 #if OPCION_IP == 3
-// ---------- get the IP address using gethostbyname --------------------------
+// ---------- Obtener la dirección IP usando gethostbyname --------------------------
 	struct hostent *he;
 	struct in_addr **addr_list;
 	int i = 0;
@@ -113,13 +114,13 @@ int main(int argc, char *argv[]){
 
 	gethostname(hostname, sizeof hostname);
 
-	if((he = gethostbyname(hostname)) == NULL) {  // get the host info
+	if((he = gethostbyname(hostname)) == NULL) {  // Obtener la información del host
 		herror("gethostbyname");
 		return 2;
 	}
 
-// Lo siguiente funciona en Cygwin en mi laptop. Puede que en otras compu-
-// tadoras haya más elementos en addr_list.
+
+// Lo siguiente funciona en Cygwin en mi laptop. Puede que en otras computadoras haya más elementos en addr_list.
 	addr_list = (struct in_addr **)he->h_addr_list;
 	strcpy(IP_buffer, inet_ntoa(*addr_list[3])); // i. Habría que ver cuántos elementos hay.
 									// y escoger la opción adecuada. 3 funciona en mi laptop
@@ -128,53 +129,53 @@ int main(int argc, char *argv[]){
 #endif
 // ----------------------------------------------------------------------------
 
-	std::cout << "Mi IP es: " << IP_buffer << std::endl;
-	std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl;
+	std::cout << "Mi IP es: " << IP_buffer << std::endl; // Imprime la dirección IP
+	std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl; // Imprime la dirección de boradcast
 
-	strcpy(IP_temp, IP_buffer);		// necessary because the next functions modifies
-	myIP = getIP(IP_temp); // get last number of the IP address (e.g. 16 in 10.3.52.16)
+	strcpy(IP_temp, IP_buffer);		// Necesario porque getIP cambia el argumento
+	myIP = getIP(IP_temp); // Obtener el último número de la IP
 
-	srand(time(NULL));				// for the rand calls later on
+	srand(time(NULL));				// Inicializa el generador de números aleatorios
 
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	if(sockfd < 0)
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0); // Crea el socket
+	if(sockfd < 0) // Verifica si hubo error
 		error("Opening socket");
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(puerto);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_family = AF_INET; // Configura la familia de direcciones
+	addr.sin_port = htons(puerto); // Configura el puerto
+	addr.sin_addr.s_addr = htonl(INADDR_ANY); // Configura la dirección IP
 
-	broadcast_addr.sin_family = AF_INET;
-	broadcast_addr.sin_port = htons(puerto);
-	broadcast_addr.sin_addr.s_addr = inet_addr(IP_broadcast);
+	broadcast_addr.sin_family = AF_INET; 
+	broadcast_addr.sin_port = htons(puerto); 
+	broadcast_addr.sin_addr.s_addr = inet_addr(IP_broadcast); 
 
-	length = sizeof(addr);			// size of structure
+	length = sizeof(addr);			// Tamaño de la dirección
 
-	// binds the socket to the address of the host and the port number
+	// Vincula el socket a la dirección del host y al número de puerto
 	if(bind(sockfd, (struct sockaddr *)&addr, length) < 0)
-		error("Error binding socket.");
+    	error("Error al vincular el socket.");
 
-	// change socket permissions to allow broadcast
+	// Cambia los permisos del socket para permitir el broadcast
 	if(setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &boolval, sizeof(boolval)) < 0)
-		error("Error setting socket options\n");
+    	error("Error al configurar las opciones del socket\n");
 
 	while(1)
 	{
-		memset(messg, 0, MSG_SIZE);	// sets all values to zero.
+		memset(messg, 0, MSG_SIZE);	// Limpia el buffer
 		
-		// receive from a client
+		// Recibe un mensaje del cliente
 		n = recvfrom(sockfd, messg, MSG_SIZE, 0, (struct sockaddr *)&addr, &length);
 	    if(n < 0)
 	 		error("recvfrom"); 
-
-		if(strncmp(messg, "QUIEN ES", 8) == 0)
+ 
+		if(strncmp(messg, "QUIEN ES", 8) == 0) // Verifica si el mensaje es "QUIEN ES"
 		{
-			if(master == TRUE)
+			if(master == TRUE) // Verifica si es el Master
 			{
 				std::cout << "A punto de informar que soy el master" << std::endl;
 				
 				std::stringstream ss;
-				ss << "Luis en " << IP_buffer << " es el Master";
+				ss << "Rodrigo en " << IP_buffer << " es el Master";
 				std::string messg = ss.str();   // Convertir a std::string
 
 				sendto(sockfd, messg.c_str(), messg.length(), 0, (struct sockaddr *)&addr, sizeof(struct sockaddr));
@@ -185,38 +186,38 @@ int main(int argc, char *argv[]){
 				std::cout <<  "No soy el Master, así que no envío ningún mensaje..."<< std::endl;
 			}
 		}
-		else if(strncmp(messg, "VOTE", 4) == 0)
+		else if(strncmp(messg, "VOTE", 4) == 0) // Verifica si el mensaje es "VOTE"
 		{
-			memset(messg, 0, MSG_SIZE);		// "limpia" el buffer
+			memset(messg, 0, MSG_SIZE);		// Limpia el buffer
 			myvote = rand()%VOTO_MAX + 1;	// El voto aleatorio entre 1 y VOTO_MAX.
 			//myvote = 5;
-			master = TRUE;			// In case nobody else votes.
+			master = TRUE;			// En caso de que nadie más vote, yo seré el Master
 
-			std::stringstream ss;
-			ss << IP_buffer << myvote;
-			std::string messg = ss.str();
+			std::stringstream ss; // Convertir a std::string
+			ss << IP_buffer << myvote; 
+			std::string messg = ss.str(); 
 
-			std::cout << "A punto de mandar mi IP y mi voto: " << messg << std::endl;
-			sendto(sockfd, messg.c_str(), messg.length(), 0, (struct sockaddr *)&broadcast_addr, sizeof(struct sockaddr));
+			std::cout << "A punto de mandar mi IP y mi voto: " << messg << std::endl; // Imprime la dirección IP y el voto
+			sendto(sockfd, messg.c_str(), messg.length(), 0, (struct sockaddr *)&broadcast_addr, sizeof(struct sockaddr)); // Envía el mensaje
 
 		}
-		else if(messg[0] == '#')
+		else if(messg[0] == '#') // Comprueba si el mensaje es un voto
 		{
-			// Extract incoming vote and IP address from messg string...
-			strcpy(messg_temp, messg);	// necessary because getIP changes the argument
-			incomingIP = getIP(messg_temp);		// get last number of IP
+    		// Extrae el voto entrante y la dirección IP del mensaje...
+    		strcpy(messg_temp, messg); // necesario porque getIP cambia el argumento
+    		incomingIP = getIP(messg_temp); // obtiene el último número de la IP
 
-			if(incomingIP != myIP)		// Si es mi propio voto, lo ignoro.
-			{
-				std::cout << "Alguien más votó: " << messg << std::endl;
-				// Get the vote from the incoming message
-				vote_tokens = strtok(messg," #.");
-				while(vote_tokens != NULL)
-				{
-					vote_tokens = strtok(NULL, " #.");
-					if(vote_tokens != NULL)
-						in_vote = atoi(vote_tokens);
-				}
+    		if(incomingIP != myIP) // Si es mi propio voto, lo ignoro.
+    		{
+        		std::cout << "Alguien más votó: " << messg << std::endl;
+        		// Obtén el voto del mensaje entrante
+        		vote_tokens = strtok(messg," #.");
+        		while(vote_tokens != NULL)
+        		{
+            		vote_tokens = strtok(NULL, " #.");
+            		if(vote_tokens != NULL)
+                		in_vote = atoi(vote_tokens);
+        		}
 
 				if(in_vote > myvote)	// Recibí un voto mayor
 				{
@@ -267,12 +268,12 @@ int main(int argc, char *argv[]){
 	return 0; 
 }
 
-int getIP(const std::string &IP_buffer)
+int getIP(const std::string &IP_buffer) // Función para obtener la dirección IP
 {
-    size_t pos = IP_buffer.rfind('.');
-    if (pos != std::string::npos)
+    size_t pos = IP_buffer.rfind('.'); // Busca el último punto
+    if (pos != std::string::npos) // Verifica si se encontró el punto
     {
-        std::string IP_part = IP_buffer.substr(pos + 1);
+        std::string IP_part = IP_buffer.substr(pos + 1); // Obtiene la dirección IP
         return std::stoi(IP_part);
     }
     return 0;

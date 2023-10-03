@@ -4,11 +4,10 @@
  Autor:  Rodrigo José García Ambrosy
  ============================================================================
  */
-#include <iostream>
-#include <unistd.h>
-#include <chrono>
-#include <thread>
-
+#include <iostream> //Librería estándar de entrada/salida
+#include <thread>   //Librería para utilizar hilos
+#include <chrono>   //Librería para manejo de tiempos
+#include <unistd.h> //Se utiliza para crear nuevos procesos utilizando fork()
 
 int main(){
     int a;

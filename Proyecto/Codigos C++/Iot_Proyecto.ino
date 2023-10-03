@@ -1,10 +1,9 @@
-
 /*
 UNIVERSIDAD DEL VALLE DE GUATEMALA
 RODRIGO GARCIA, 19085
 PROYECTO FINAL
 Arduino IoT
-*/ 
+*/
 
 #include <ArduinoBLE.h>
 
@@ -12,79 +11,76 @@ long previousMillis = 0;
 int interval = 0;
 int ledState = LOW;
 
-BLEService ledService("180A"); // BLE LED Service
+BLEService servicioLED("180A"); // Servicio BLE para el LED
 
-// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic switchCharacteristic("2A57", BLERead | BLEWrite);
+// Característica de Interruptor LED BLE - UUID personalizado de 128 bits, lectura y escritura por parte del central
+BLEByteCharacteristic caracteristicaInterruptor("2A57", BLERead | BLEWrite);
 
 void setup() {
   pinMode(A1, OUTPUT);
-    pinMode(A2, OUTPUT);
+  pinMode(A2, OUTPUT);
   Serial.begin(9600);
   while (!Serial);
 
-  // set built in LED pin to output mode
-  //pinMode(LED_BUILTIN, OUTPUT);
-
-  // begin initialization
+  // Comienza la inicialización
   if (!BLE.begin()) {
-    Serial.println("starting BLE failed!");
+    Serial.println("¡Inicio de BLE fallido!");
 
     while (1);
   }
 
-  // set advertised local name and service UUID:
+  // Establece el nombre local anunciado y el UUID del servicio:
   BLE.setLocalName("Nano 33 IoT");
-  BLE.setAdvertisedService(ledService);
+  BLE.setAdvertisedService(servicioLED);
 
-  // add the characteristic to the service
-  ledService.addCharacteristic(switchCharacteristic);
+  // Agrega la característica al servicio
+  servicioLED.addCharacteristic(caracteristicaInterruptor);
 
-  // add service
-  BLE.addService(ledService);
+  // Agrega el servicio
+  BLE.addService(servicioLED);
 
-  // set the initial value for the characteristic:
-  switchCharacteristic.writeValue(0);
+  // Establece el valor inicial para la característica:
+  caracteristicaInterruptor.writeValue(0);
 
-  // start advertising
+  // Comienza a anunciarse
   BLE.advertise();
 
-  Serial.println("BLE LED Peripheral");
+  Serial.println("Periférico LED BLE");
 }
 
 void loop() {
-  // listen for BLE peripherals to connect:
+  // Escucha por periféricos BLE para conectar:
   BLEDevice central = BLE.central();
 
-  // if a central is connected to peripheral:
+  // Si un central se conecta al periférico:
   if (central) {
-    Serial.print("Connected to central: ");
-    // print the central's MAC address:
+    Serial.print("Conectado al central: ");
+    // imprime la dirección MAC del central:
     Serial.println(central.address());
 
-    // while the central is still connected to peripheral:
+    // mientras el central sigue conectado al periférico:
     while (central.connected()) {
-      // if the remote device wrote to the characteristic,
-      // use the value to control the LED:
-      if (switchCharacteristic.written()) {
-        switch (switchCharacteristic.value()) {   // any value other than 0
+      // si el dispositivo remoto escribió en la característica,
+      // usa el valor para controlar el LED:
+      if (caracteristicaInterruptor.written()) {
+        switch (caracteristicaInterruptor.value()) {   // cualquier valor que no sea 0
           case 01:
-            Serial.println("LED on");
-            digitalWrite(A1, HIGH);            // will turn the LED on
+            Serial.println("LED encendido");
+            digitalWrite(A1, HIGH);            // enciende el LED
             digitalWrite(A2, HIGH); 
             break;
           default:
-            Serial.println(F("LED off"));
-            digitalWrite(A1, LOW);          // will turn the LED off
+            Serial.println(F("LED apagado"));
+            digitalWrite(A1, LOW);          // apaga el LED
             digitalWrite(A2, LOW); 
             break;
         }
       }
     }
 
-    // when the central disconnects, print it out:
-    Serial.print(F("Disconnected from central: "));
+    // cuando el central se desconecta, imprímelo:
+    Serial.print(F("Desconectado del central: "));
     Serial.println(central.address());
-    digitalWrite(A1, LOW);         // will turn the LED off
+    digitalWrite(A1, LOW);         // apaga el LED
   }
 }
