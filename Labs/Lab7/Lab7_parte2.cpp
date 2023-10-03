@@ -8,7 +8,7 @@
 #include <thread>   // Librería para utilizar hilos
 #include <chrono>   // Librería para utilizar la función sleep_for
 #include <wiringPi.h> // Librería para controlar pines GPIO
-#include <semaphore>    // Librería para utilizar semáforos
+#include <semaphore.h>   // Librería para utilizar semáforos
 
 #define LUZ_1  3 // Pin para la luz 1
 #define LUZ_2  4 // Pin para la luz 2
