@@ -9,6 +9,7 @@
 #include <cstring>  // Librería para la manipulación de cadenas
 #include <cstdint>
 #include <wiringPiSPI.h> // Librería para utilizar el bus SPI
+#include <wiringPiI2C.h> // Librería para utilizar el bus I2C
 #include <string>   // Librería para utilizar cadenas
 #include <sys/socket.h>  // Librería para utilizar sockets
 #include <arpa/inet.h>   // Librería para manipular direcciones IP
@@ -262,7 +263,7 @@ int main(int argc, char *argv[]) {
     Switch swtch1(Swtch1,3,switch1);
     Switch swtch2(Swtch2,5, switch2);
     digitalWrite(Alarm, LOW);
-
+    
    if(argc != 2)
 	{
 	    std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
@@ -340,7 +341,16 @@ int main(int argc, char *argv[]) {
 void RTU1(int sock, sockaddr_in& addres, socklen_t& leng){
     LED luz1(LUZ_1);
     LED luz2(LUZ_2);
-    
+        // Replace with the I2C address of your Arduino Nano IoT
+    int i2cAddress = 0x08;
+
+    // Open I2C communication
+    int i2cHandle = wiringPiI2CSetup(i2cAddress);
+    if (i2cHandle == -1) {
+        std::cerr << "Error opening I2C communication." << std::endl;
+        return;
+    }
+
     while (1){
 
         memset(buffer, 0, MSG_SIZE);
@@ -383,9 +393,26 @@ void RTU1(int sock, sockaddr_in& addres, socklen_t& leng){
             std::sprintf(mensaje, "LED indicador 2 apagado");
             std::cout << std::flush;
         }
-
+        if((std::strcmp(buffer, "RTU1 LEDIoT 1") == 0)){
+            char mensaje[60];
+            char data1[] = "A";
+            status_led_1 = 1;
+            agregar_evento(13);
+            write(i2cHandle, data1, sizeof(data1));
+            std::sprintf(mensaje, "LED Iot encendido");
+            std::cout << std::flush;
+        }
+        if((std::strcmp(buffer, "RTU1 LEDIoT 0") == 0)){
+            char mensaje[60];
+            char data0[] = "B";
+            status_led_1 = 0;
+            agregar_evento(14);
+            write(i2cHandle, data0, sizeof(data0));
+            std::sprintf(mensaje, "LED Iot encendido");
+            std::cout << std::flush;
+        }
     }
-    
+    close(i2cHandle);
 }
 
 uint16_t get_ADC(int ADC_chan)
@@ -412,3 +439,4 @@ uint16_t get_ADC(int ADC_chan)
 	
 	return(resultado);
 }
+

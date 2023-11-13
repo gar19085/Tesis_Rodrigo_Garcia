@@ -161,6 +161,16 @@ void enviar(void*ptr) // Función para enviar mensajes
             n = sendto(sockfd, buffer, strlen(buffer), 0, 
             (const struct sockaddr *)&RTU, length);
             if (n < 0) error("ERROR sendto");
-        }  
+        }
+        if((std::strcmp(buffer, "RTU1 LEDIoT 1\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU1 LEDIoT 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }            
     }
 }

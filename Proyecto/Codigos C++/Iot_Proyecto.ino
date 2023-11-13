@@ -1,86 +1,51 @@
-/*
-UNIVERSIDAD DEL VALLE DE GUATEMALA
-RODRIGO GARCIA, 19085
-PROYECTO FINAL
-Arduino IoT
-*/
+#include <Wire.h>
 
-#include <ArduinoBLE.h>
+const int BUFFER_SIZE = 64;
+char buffer[BUFFER_SIZE];
+int bufferIndex = 0;
 
-long previousMillis = 0;
-int interval = 0;
-int ledState = LOW;
+void receiveEvent(int howMany) {
+  while (Wire.available()) {
+    char receivedChar = Wire.read();
+    
+    // Check if the buffer is not full
+    if (bufferIndex < BUFFER_SIZE - 1) {
+      buffer[bufferIndex++] = receivedChar;
+      buffer[bufferIndex] = '\0'; // Null-terminate the buffer
+    }
+  }
+}
 
-BLEService servicioLED("180A"); // Servicio BLE para el LED
+void processReceivedData() {
+  if (bufferIndex > 0) {
+    // Process the received data
+    Serial.print("Received data: ");
+    Serial.println(buffer);
 
-// Característica de Interruptor LED BLE - UUID personalizado de 128 bits, lectura y escritura por parte del central
-BLEByteCharacteristic caracteristicaInterruptor("2A57", BLERead | BLEWrite);
+    // Check for specific characters
+    if (buffer[0] == 'A') {
+      Serial.println("Turning on the built-in LED.");
+      digitalWrite(LED_BUILTIN, HIGH);
+    } else if (buffer[0] == 'B') {
+      Serial.println("Turning off the built-in LED.");
+      digitalWrite(LED_BUILTIN, LOW);
+    }
+    
+    // Clear the buffer
+    bufferIndex = 0;
+    buffer[0] = '\0';
+  }
+}
 
 void setup() {
-  pinMode(A1, OUTPUT);
-  pinMode(A2, OUTPUT);
+  Wire.begin(0x08);
+  Wire.onReceive(receiveEvent);
   Serial.begin(9600);
-  while (!Serial);
-
-  // Comienza la inicialización
-  if (!BLE.begin()) {
-    Serial.println("¡Inicio de BLE fallido!");
-
-    while (1);
-  }
-
-  // Establece el nombre local anunciado y el UUID del servicio:
-  BLE.setLocalName("Nano 33 IoT");
-  BLE.setAdvertisedService(servicioLED);
-
-  // Agrega la característica al servicio
-  servicioLED.addCharacteristic(caracteristicaInterruptor);
-
-  // Agrega el servicio
-  BLE.addService(servicioLED);
-
-  // Establece el valor inicial para la característica:
-  caracteristicaInterruptor.writeValue(0);
-
-  // Comienza a anunciarse
-  BLE.advertise();
-
-  Serial.println("Periférico LED BLE");
+  
+  pinMode(LED_BUILTIN, OUTPUT); // Set the LED pin as output
 }
 
 void loop() {
-  // Escucha por periféricos BLE para conectar:
-  BLEDevice central = BLE.central();
-
-  // Si un central se conecta al periférico:
-  if (central) {
-    Serial.print("Conectado al central: ");
-    // imprime la dirección MAC del central:
-    Serial.println(central.address());
-
-    // mientras el central sigue conectado al periférico:
-    while (central.connected()) {
-      // si el dispositivo remoto escribió en la característica,
-      // usa el valor para controlar el LED:
-      if (caracteristicaInterruptor.written()) {
-        switch (caracteristicaInterruptor.value()) {   // cualquier valor que no sea 0
-          case 01:
-            Serial.println("LED encendido");
-            digitalWrite(A1, HIGH);            // enciende el LED
-            digitalWrite(A2, HIGH); 
-            break;
-          default:
-            Serial.println(F("LED apagado"));
-            digitalWrite(A1, LOW);          // apaga el LED
-            digitalWrite(A2, LOW); 
-            break;
-        }
-      }
-    }
-
-    // cuando el central se desconecta, imprímelo:
-    Serial.print(F("Desconectado del central: "));
-    Serial.println(central.address());
-    digitalWrite(A1, LOW);         // apaga el LED
-  }
+  processReceivedData();
+  delay(100); // Add a small delay to avoid excessive looping
 }
