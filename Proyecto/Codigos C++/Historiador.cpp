@@ -1,4 +1,3 @@
-
 /*
  ============================================================================
  Nombre: Historiador.cpp
@@ -9,7 +8,6 @@
 #include <iostream> // Librería estándar de entrada/salida
 #include <thread>   // Librería para utilizar hilos
 #include <chrono>   // Librería para utilizar la función sleep_for
-#include <wiringPi.h> // Librería para controlar pines GPIO
 #include <cstdio>  //Librería estándar de entrada/salida
 #include <cstdlib> //Librería estándar para funciones generales
 #include <cstring> //Librería para la manipulación de cadenas
@@ -19,14 +17,16 @@
 #include <netinet/in.h> // Librería para utilizar direcciones de internet
 #include <arpa/inet.h>  // Librería para manipular direcciones IP
 
-#define MSG_SIZE 301 // Tamaño del mensaje
-#define IP "10.0.0.255" // Dirección IP
-
-int sockfd1,sockfd2, n; // Descriptores de archivo
-unsigned int length;    // Tamaño de la estructura sockaddr_in
+#define MSG_SIZE 3000 // Tamaño del mensaje
+#define IP "192.168.1.255" // Dirección IP
+#define OPCION_IP 0 /// 0 - hard coded
+#define IP_LENGTH 15 // Tamaño de la dirección IP
+int sockfd, n; // Descriptores de archivo
+unsigned int length = sizeof(struct sockaddr_in);// Tamaño de la estructura sockaddr_in
 struct sockaddr_in RTU, from1; // Estructuras para almacenar las direcciones de los sockets
 char buffer[MSG_SIZE];	// Buffer para almacenar el mensaje
 int boolval = 1;		// Opción de socket
+char IP_broadcast[IP_LENGTH]; 
 
 void enviar(void*ptr); // Declaración de la función enviar
 
@@ -36,8 +36,26 @@ void error(const char *msg) // Función para imprimir errores
     exit(0);
 }
 
+void receiving(int sock) // Función para recibir mensajes
+{
+    char buffer[MSG_SIZE]; // Buffer para almacenar el mensaje
+    struct sockaddr_in from; // Estructura para almacenar la dirección del emisor
+
+    while (true) 
+    {
+        memset(buffer, 0, MSG_SIZE); 
+        int n = recvfrom(sock, buffer, MSG_SIZE, 0, reinterpret_cast<struct sockaddr *>(&from), &length); // Recibe el mensaje
+        if (n < 0) // Verifica si hubo error
+            error("Error: recvfrom");
+
+        std::cout << "Esto se recibió: " << buffer << std::endl; // Imprime el mensaje recibido
+    }
+}
+
 int main(int argc, char *argv[]) // Función principal
 {
+
+
     std::thread hilo1; // Declaración del hilo
 
     if (argc != 2) // Verifica si se ingresó el puerto
@@ -45,40 +63,50 @@ int main(int argc, char *argv[]) // Función principal
         std::cout << "Uso: " << argv[0] << " <puerto>" << std::endl;
         return 0;
     }
+#if OPCION_IP == 0 // Configuración de la dirección IP
+    std::strcpy(IP_broadcast, "192.168.1.255");
+#endif
 
-    sockfd1 = socket(AF_INET, SOCK_DGRAM, 0); // Crea el socket. Es sin conexión.
-    if (sockfd1 < 0) error("ERROR al abrir el socket");
+    std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl;
+    
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0); // Crea el socket. Es sin conexión.
+    if (sockfd < 0) error("ERROR al abrir el socket");
 
     RTU.sin_family = AF_INET; // constante de símbolo para dominio de Internet
     RTU.sin_port = htons(atoi(argv[1])); // campo de puerto
-    RTU.sin_addr.s_addr = inet_addr(IP); // campo de dirección IP. Para el servidor, será la dirección IP de la máquina en la que se ejecuta este programa.
-    length = sizeof(struct sockaddr_in); // tamaño de la estructura
+    //RTU.sin_addr.s_addr = inet_addr(IP); // campo de dirección IP. Para el servidor, será la dirección IP de la máquina en la que se ejecuta este programa.
+    
+    
+    if (bind(sockfd, reinterpret_cast<struct sockaddr *>(&RTU), length) < 0) // Asigna el socket
+    {
+        std::cout << "Error binding socket." << std::endl;
+        exit(-1);
+    }
 
-    if (bind(sockfd1, (struct sockaddr *)&RTU, length) < 0) // Vincula el socket a una dirección
-        error("ERROR al vincular");
-
-    if (setsockopt(sockfd1, SOL_SOCKET, SO_BROADCAST, &boolval, sizeof(boolval)) < 0) // Configura el socket
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &boolval, sizeof(boolval)) < 0) // Configura el socket
     {
         std::cout << "error al configurar opciones del socket" << std::endl;
         exit(-1);
     }
 
+
     hilo1 = std::thread(enviar, (void *)0); // Crea el hilo
 
     std::cout << "Los comandos son los siguientes:" << std::endl; // Imprime los comandos
     std::cout << "RTU# LED# 0 o 1" << std::endl;
-
+    RTU.sin_addr.s_addr = inet_addr(IP);
     char CONEXION[128]; // Variable para almacenar el mensaje
+    
     std::strcpy(CONEXION, "Conexión"); // Copia el mensaje en la variable
-    n = sendto(sockfd1, CONEXION, strlen(CONEXION), 0, (const struct sockaddr *)&RTU, length); // Envia el mensaje
-    if (n < 0) error("ERROR al enviar"); // Verifica si hubo error
-
+    n = sendto(sockfd, CONEXION, strlen(CONEXION), 0, (const struct sockaddr *)&RTU, length); // Envia el mensaje
+    if (n < 0){
+        std::cerr << "ERROR al enviar" << std::endl; // Verifica si hubo error
+    } 
+    
     while (1)
     {
-        memset(buffer, 0, MSG_SIZE); // Limpia el buffer
-        n = recvfrom(sockfd1, buffer, MSG_SIZE, 0, (struct sockaddr *)&from1, &length); // Recibe el mensaje
-        if (n < 0) error("ERROR al recibir"); // Verifica si hubo error
-        std::cout << buffer << std::endl;
+        memset(buffer, 0, MSG_SIZE);
+        receiving(sockfd);
     }
 }
 
@@ -86,41 +114,53 @@ void enviar(void*ptr) // Función para enviar mensajes
 {
     while(1){
         memset(buffer, 0, MSG_SIZE); // Limpia el buffer
-        std::cout << "Please enter the message (! to exit): " << std::endl; 
-        std::cin.getline(buffer, MSG_SIZE); // Lee el mensaje
-        if(buffer[0] == '!'){ // Verifica si se ingresó el comando para salir
-            if((std::strcmp(buffer, "RTU1 LED1 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED1 de la RTU1
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU1 LED1 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED1 de la RTU1
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU1 LED2 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED2 de la RTU1
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU1 LED2 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU1
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU2 LED1 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED1 de la RTU2
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU2 LED1 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED1 de la RTU2
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU2 LED2 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED2 de la RTU2
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-            if((std::strcmp(buffer, "RTU2 LED2 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
-                n = sendto(sockfd1, buffer, strlen(buffer), 0, (const struct sockaddr *)&RTU, length);
-                if (n < 0) error("ERROR sendto");
-            }
-        } 
+        std::cout << "Utilizar ! para salir: " << std::endl; 
+        std::cin.getline(buffer, MSG_SIZE - 1); // Lee el mensaje
+
+        std::cout << "Sending message: " << buffer << std::endl;
+        n = sendto(sockfd, buffer, strlen(buffer), 0,
+        (const struct sockaddr *)&RTU, length);
+        if (n < 0) error("ERROR sendto");
+
+        if((std::strcmp(buffer, "RTU1 LED1 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED1 de la RTU1
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU1 LED1 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED1 de la RTU1
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU1 LED2 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED2 de la RTU1
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU1 LED2 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU1
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU2 LED1 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED1 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU2 LED1 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED1 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU2 LED2 1\n")) == 0){ // Verifica si se ingresó el comando para encender el LED2 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU2 LED2 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }  
     }
 }

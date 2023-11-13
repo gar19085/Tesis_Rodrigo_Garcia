@@ -16,8 +16,9 @@
 #include <thread>  // Librería para utilizar hilos
 #include <chrono>  // Librería para utilizar la función sleep_for
 
-#define OPCION_IP 0 // 0 para IP de broadcast, 1 para IP de archivo, 2 para IP de argumento
-#define MSG_SIZE 60 // Tamaño del mensaje
+#define OPCION_IP 1 /// 0 - hard coded
+					// 1 - Raspberry Pi
+#define MSG_SIZE 60	
 #define IP_LENGTH 15 // Tamaño de la dirección IP
 
 void error(const char *msg) 
@@ -61,29 +62,34 @@ int main(int argc, char *argv[]) // Función principal
     }
 
 #if OPCION_IP == 0 // Configuración de la dirección IP
-    strcpy(IP_broadcast, "192.168.1.255");
+    std::strcpy(IP_broadcast, "192.168.90.255");
 #endif
 
 #if (OPCION_IP == 1) || (OPCION_IP == 2) // Configuración de la dirección IP
-    // ...
 
-    file = fopen("ipaddr", "r");
-    if (file == nullptr)
-    {
-        std::cout << "Error opening file" << std::endl;
-        exit(-1);
-    }
-    else
-    {
-        fscanf(file, "%s", IP_broadcast);
-    }
-
-    fclose(file);
-
-    // ...
+#if OPCION_IP == 1
+	system("ifconfig wlan0 | grep 'inet ' | awk '{ print $6 }' > ipaddr"); // Ejecutar comando para obtener la dirección de broadcast
+#else
+	system("ifconfig enp0s31f6 | grep 'inet ' | awk '{ print $6 }' > ipaddr"); 
 #endif
 
-    std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl << std::endl; // Imprime la dirección IP
+	file = fopen("ipaddr", "r");	// Abrir archivo con la dirección de broadcast
+	if(file == NULL)
+	{
+		std::cout << "Error al abrir el archivo" << std::endl;;
+		exit(-1);
+	}
+	else
+	{
+		fscanf(file, "%s", IP_broadcast); // Leer la dirección de broadcast del archivo
+	}
+
+	fclose(file);					// Cerrar archivo
+	system("rm ipaddr");			// Asegurarse de eliminar el archivo cuando se termine
+
+#endif
+
+    std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl; // Imprime la dirección IP
 
     anybody.sin_family = AF_INET; // Configura la familia de direcciones
     anybody.sin_port = htons(atoi(argv[1])); // Configura el puerto

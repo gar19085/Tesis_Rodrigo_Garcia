@@ -62,7 +62,7 @@ private:
     int pin_;
 };
 
-std::binary_semaphore sem(1); // Declaración del semáforo
+//std::binary_semaphore sem(1); // Declaración del semáforo
 
 void luz(LightController &light, int priority) { // Función para el control de las luces
     struct sched_param param; //Se define una estructura para la planificación
@@ -104,6 +104,7 @@ void peatonal(LightController &light, ButtonHandler &buttonHandler, int priority
 }
 
 int main() { // Función principal
+    sem_init(&sem, 0, 1);
     wiringPiSetupGpio();
 
     LightController luz1Ctrl(LUZ_1); //Se crea un objeto de la clase LightController
@@ -114,6 +115,7 @@ int main() { // Función principal
     std::thread hilo_luz1(luz, std::ref(luz1Ctrl), LUZ_1_PRI); //Se crea un hilo para el control de la luz 1
     std::thread hilo_luz2(luz, std::ref(luz2Ctrl), LUZ_2_PRI); //Se crea un hilo para el control de la luz 2
     std::thread hilo_luzP(peatonal, std::ref(luzPCtrl), std::ref(buttonHandler), LUZ_P_PRI); //Se crea un hilo para el control de la luz peatonal
+    
 
     hilo_luz1.join();
     hilo_luz2.join();

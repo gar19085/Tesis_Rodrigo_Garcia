@@ -278,14 +278,3 @@ int getIP(char *IP_buffer)
 }
 
 
-//Can you recreate this code in C++?
-
-//I need to use C++ standar libraries, so I can't use the C libraries.
-//For the sockets you can use the linux libraries that are in the headers of the code.
-
-
-//I need to use C++ standar libraries, so I can't use the C libraries.
-//For the sockets you can use the linux libraries that are in the headers of the code.	
-//Can you recreate the code using this libraries?
-
-//Can you make the code?

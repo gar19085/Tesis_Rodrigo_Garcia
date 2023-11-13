@@ -15,7 +15,7 @@ int main(){
     a = fork(); //Se crea el primer proceso hijo
     a = fork(); //Se crean dos procesos hijos más
     a = fork();
-
+    
     //Todos los procesos ejecutan esta línea de código
     std::cout << "Mensaje, valor =" << a << std::endl; 
     std::cout.flush();

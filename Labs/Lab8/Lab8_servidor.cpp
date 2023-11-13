@@ -17,13 +17,15 @@
 #include <arpa/inet.h>	// Librería para manipular direcciones IP
 #include <sstream> 		// Librería para utilizar la función stringstream
 
-#define OPCION_IP 1 // 0 para IP de broadcast, 1 para IP de archivo, 2 para IP de argumento
+#define OPCION_IP 1 // 0 - hard coded
+					// 1 - Raspberry Pi / CentOS
+					// 2 - CentOS J-305/306
 #define TRUE 1	// Definición de TRUE
 #define FALSE 0	// Definición de FALSE
 #define MSG_SIZE 60	// Tamaño del mensaje
 #define VOTO_MAX 15	// Voto máximo
 #define IP_LENGTH 15	// Tamaño de la dirección IP
-#define PORT 2000	// Puerto de comunicación
+#define PORT 2044	// Puerto de comunicación
 
 int getIP(char *);	// Función para obtener la dirección IP
 
@@ -56,8 +58,8 @@ int main(int argc, char *argv[]){ // Función principal
     
 #if OPCION_IP == 0 //
 // --- hard coded -------------------------------------------------------------
-	strcpy(IP_buffer, "10.0.0.22");
-	strcpy(IP_broadcast, "10.0.0.255");
+	strcpy(IP_buffer, "192.168.20.227");
+	strcpy(IP_broadcast, "192.168.20.255");
 #endif
 
 #if (OPCION_IP == 1) || (OPCION_IP == 2) 
@@ -81,7 +83,7 @@ int main(int argc, char *argv[]){ // Función principal
 	}
 
 	fclose(file);					// Cierra el archivo
-    
+   
 // --- Obtener la dirección de broadcast y guardarla en el archivo ipaddr ---
 #if OPCION_IP == 1
 	system("ifconfig wlan0 | grep 'inet ' | awk '{ print $6 }' > ipaddr"); // Ejecutar comando para obtener la dirección de broadcast
@@ -124,7 +126,7 @@ int main(int argc, char *argv[]){ // Función principal
 	addr_list = (struct in_addr **)he->h_addr_list;
 	strcpy(IP_buffer, inet_ntoa(*addr_list[3])); // i. Habría que ver cuántos elementos hay.
 									// y escoger la opción adecuada. 3 funciona en mi laptop
-	strcpy(IP_broadcast, "192.168.1.255");	// Habría que construir la IP de broadcast a partir
+	strcpy(IP_broadcast, "192.168.56.255");	// Habría que construir la IP de broadcast a partir
 											// de la propia.
 #endif
 // ----------------------------------------------------------------------------
@@ -175,7 +177,7 @@ int main(int argc, char *argv[]){ // Función principal
 				std::cout << "A punto de informar que soy el master" << std::endl;
 				
 				std::stringstream ss;
-				ss << "Rodrigo en " << IP_buffer << " es el Master";
+				ss << "Rodrigo RP4 en " << IP_buffer << " es el Master";
 				std::string messg = ss.str();   // Convertir a std::string
 
 				sendto(sockfd, messg.c_str(), messg.length(), 0, (struct sockaddr *)&addr, sizeof(struct sockaddr));
@@ -194,7 +196,7 @@ int main(int argc, char *argv[]){ // Función principal
 			master = TRUE;			// En caso de que nadie más vote, yo seré el Master
 
 			std::stringstream ss; // Convertir a std::string
-			ss << IP_buffer << myvote; 
+			ss << "#" << IP_buffer << " " << myvote; 
 			std::string messg = ss.str(); 
 
 			std::cout << "A punto de mandar mi IP y mi voto: " << messg << std::endl; // Imprime la dirección IP y el voto
@@ -268,13 +270,15 @@ int main(int argc, char *argv[]){ // Función principal
 	return 0; 
 }
 
-int getIP(const std::string &IP_buffer) // Función para obtener la dirección IP
+int getIP(char *IP_buffer) // Función para obtener la dirección IP
+
 {
-    size_t pos = IP_buffer.rfind('.'); // Busca el último punto
-    if (pos != std::string::npos) // Verifica si se encontró el punto
-    {
-        std::string IP_part = IP_buffer.substr(pos + 1); // Obtiene la dirección IP
-        return std::stoi(IP_part);
-    }
-    return 0;
+
+	char *IPptr;
+	IPptr = strtok(IP_buffer, ".");
+	IPptr = strtok(NULL, ".");
+	IPptr = strtok(NULL, ".");
+	IPptr = strtok(NULL, ". ");
+	return (atoi(IPptr));
+
 }
