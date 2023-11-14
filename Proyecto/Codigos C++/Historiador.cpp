@@ -16,6 +16,7 @@
 #include <sys/socket.h> // Librería para utilizar sockets
 #include <netinet/in.h> // Librería para utilizar direcciones de internet
 #include <arpa/inet.h>  // Librería para manipular direcciones IP
+#include <fstream>
 
 #define MSG_SIZE 3000 // Tamaño del mensaje
 #define IP "192.168.1.255" // Dirección IP
@@ -36,7 +37,7 @@ void error(const char *msg) // Función para imprimir errores
     exit(0);
 }
 
-void receiving(int sock) // Función para recibir mensajes
+void receiving(int sock, std::ofstream& outputFile) // Función para recibir mensajes
 {
     char buffer[MSG_SIZE]; // Buffer para almacenar el mensaje
     struct sockaddr_in from; // Estructura para almacenar la dirección del emisor
@@ -49,12 +50,19 @@ void receiving(int sock) // Función para recibir mensajes
             error("Error: recvfrom");
 
         std::cout << "Esto se recibió: " << buffer << std::endl; // Imprime el mensaje recibido
+        outputFile << buffer << std::endl; // Escribe el mensaje en el archivo de salida
     }
 }
 
 int main(int argc, char *argv[]) // Función principal
 {
+    std::ofstream outputFile("output.txt");
 
+    // Check if the file is successfully opened
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening the file." << std::endl;
+        return 1; // Return an error code
+    }
 
     std::thread hilo1; // Declaración del hilo
 
@@ -106,8 +114,10 @@ int main(int argc, char *argv[]) // Función principal
     while (1)
     {
         memset(buffer, 0, MSG_SIZE);
-        receiving(sockfd);
+        receiving(sockfd, outputFile);
     }
+    outputFile.close(); // Cierra el archivo de salida
+    return 0;
 }
 
 void enviar(void*ptr) // Función para enviar mensajes

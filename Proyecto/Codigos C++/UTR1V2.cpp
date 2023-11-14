@@ -2,7 +2,6 @@
 #include <iostream> // Librería estándar de entrada/salida
 #include <thread>   // Librería para utilizar hilos
 #include <chrono>   // Librería para utilizar la función sleep_for
-#include <semaphore.h>    // Librería para utilizar semáforos
 #include <cstdio>   // Librería estándar de entrada/salida
 #include <cstdlib>  // Librería estándar para funciones generales
 #include <ctime>    // Librería para utilizar la función time
@@ -17,7 +16,7 @@
 #include <unistd.h>
 #include <vector>
 
-#define SPI_CHANNEL	      1	// Canal SPI de la Raspberry Pi, 0 ó 1
+#define SPI_CHANNEL	      0	// Canal SPI de la Raspberry Pi, 0 ó 1
 #define SPI_SPEED 	1500000	// Velocidad de la comunicación SPI (reloj, en HZ)
                             // Máxima de 3.6 MHz con VDD = 5V, 1.2 MHz con VDD = 2.7V
 #define ADC_CHANNEL       0	// Canal A/D del MCP3002 a usar, 0 ó 1
@@ -38,7 +37,7 @@
 char timestamp_str[20];
 
 int switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2;
-float voltajeadc; 
+float voltajeadc = 0; 
 
 const int MAX_NEVENTOS = 100; // Adjust the value based on your requirements
 char eventos_pendientes[MAX_NEVENTOS][256]; // Assuming a fixed size for the array of C-style strings
@@ -225,9 +224,9 @@ void agregar_evento(uint8_t evento_id) {
     numero_eventos++;
 
     // Format the event string using sprintf
-    std::sprintf(message, "RTU1 %d %s %d %d%d %d%d %d %d%d",
+    std::sprintf(message, "RTU1 %d %s %d %d%d %d%d %d %d%d %0.2f",
              evento_id, timestamp, static_cast<int>(current_time.tv_usec / 1000),
-             switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2);
+             switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2, voltajeadc);
 
     // Print the event string
     std::cout << "Sending message: " << message << std::endl;
@@ -250,6 +249,8 @@ int main(int argc, char *argv[]) {
     wiringPiSetupGpio();
     pinMode(Alarm, OUTPUT);
     uint16_t ADCvalue;
+    int last_alarm_statusH=0;
+    int last_alarm_statusL=0;
         // Add SPI setup
     if (wiringPiSPISetup(SPI_CHANNEL, SPI_SPEED) < 0) {
         std::cerr << "Error setting up SPI" << std::endl;
@@ -293,7 +294,8 @@ int main(int argc, char *argv[]) {
 
     while (true) {
         time_on++;
-
+        ADCvalue =get_ADC(ADC_CHANNEL);
+        std::cout << ADCvalue << std::endl;
         PUSH1 = 0;
         PUSH2 = 0;
         if (btn1.isPressed()) {
@@ -306,18 +308,26 @@ int main(int argc, char *argv[]) {
         swtch2.checkState();
 
         // Check voltage and control the speaker accordingly
-        if (ADCvalue < 0.5) {
-            // Below 0.5V, turn on the speaker
-            //agregar_evento(9);
-            //digitalWrite(Alarm, HIGH);
-        } else if (ADCvalue > 2.5) {
-            // Above 2.5V, turn off the speaker
-            //agregar_evento(10);
-            //digitalWrite(Alarm, LOW);
 
-        }//else if ((voltage < 2.5)&&(voltage > 0.5)){
-            //digitalWrite(Alarm, LOW);
-        //}
+        if (voltajeadc < 0.5) {
+            if(last_alarm_statusL == 0){
+            // Below 0.5V, turn on the speaker
+                agregar_evento(15);
+                last_alarm_statusL = 1;
+                digitalWrite(Alarm, HIGH);
+            }
+        } else if (voltajeadc > 2.5) {
+            // Above 2.5V, turn off the speaker
+            if(last_alarm_statusH == 0){
+                agregar_evento(16);
+                last_alarm_statusH = 1;
+                digitalWrite(Alarm, HIGH);
+            }
+        }else if ((voltajeadc < 2.5)&&(voltajeadc > 0.5)){
+            digitalWrite(Alarm, LOW);
+            last_alarm_statusL = 0;
+            last_alarm_statusH = 0;
+        }
 
         if ((time_on %15) == 0){   
             agregar_evento (0);
@@ -436,7 +446,7 @@ uint16_t get_ADC(int ADC_chan)
 	
 	// spiData[0] y spiData[1] tienen el resultado (2 bits y 8 bits, respectivamente)
 	resultado = (spiData[0] << 8) | spiData[1];
-	
+	voltajeadc=(resultado*3.3)/1023.0;
 	return(resultado);
 }
 
