@@ -1,711 +1,426 @@
-/*
-
- ============================================================================
-
- Nombre: UTR1.cpp
-
- Autor:  Rodrigo José García Ambrosy
-
- Proyecto
-
- ============================================================================
-
- */
-
 #include <wiringPi.h> // Librería para controlar pines GPIO
 #include <iostream> // Librería estándar de entrada/salida
 #include <thread>   // Librería para utilizar hilos
 #include <chrono>   // Librería para utilizar la función sleep_for
-#include <semaphore.h>    // Librería para utilizar semáforos
 #include <cstdio>   // Librería estándar de entrada/salida
 #include <cstdlib>  // Librería estándar para funciones generales
 #include <ctime>    // Librería para utilizar la función time
 #include <cstring>  // Librería para la manipulación de cadenas
+#include <cstdint>  // Librería para utilizar tipos de datos enteros
 #include <wiringPiSPI.h> // Librería para utilizar el bus SPI
+#include <wiringPiI2C.h> // Librería para utilizar el bus I2C
 #include <string>   // Librería para utilizar cadenas
 #include <sys/socket.h>  // Librería para utilizar sockets
 #include <arpa/inet.h>   // Librería para manipular direcciones IP
-#include <sys/time.h>
+#include <sys/time.h>   // Librería para utilizar la función gettimeofday
+#include <unistd.h>    // Librería que proporciona funciones y constantes específicas de sistemas Unix.
+#include <vector>   // Librería para utilizar vectores
 
+#define SPI_CHANNEL	      0	// Canal SPI de la Raspberry Pi, 0 ó 1
+#define SPI_SPEED 	1500000	// Velocidad de la comunicación SPI (reloj, en HZ)
+                            // Máxima de 3.6 MHz con VDD = 5V, 1.2 MHz con VDD = 2.7V
+#define ADC_CHANNEL       0	// Canal A/D del MCP3002 a usar, 0 ó 1
+#define MSG_SIZE 301     // Tamaño del mensaje
+#define IP "192.168.1.255" // Dirección IP
 
+#define LUZ_1   24  // Pin para la luz 1
+#define LUZ_2   25  // Pin para la luz 2
+#define BTN1    17   // Pin para el botón 1
+#define BTN2    26  // Pin para el botón 2
+#define Swtch1  22  // Pin para el switch 1
+#define Swtch2  23  // Pin para el switch 2
+#define Alarm   16  // Pin para la alarma/buzzer
 
-#define SPI_CHAN 0  // Canal del bus SPI
-#define SPI_SPEED 1500000   // Velocidad del bus SPI
-#define ADC_CHANNEL 0   // Canal del ADC  
-#define MSG_SIZE 40     // Tamaño del mensaje
-#define IP "192.168.20.255" // Dirección IP
+char timestamp_str[20];
 
+// Variables globales
+int switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2;
+float voltajeadc = 0; 
 
-#define LUZ_1   20  // Pin para la luz 1
-#define LUZ_2   21  // Pin para la luz 2
-#define BTN1    5   // Pin para el botón 1
-#define BTN2    17  // Pin para el botón 2
-#define Swtch1 19  // Pin para el switch 1
-#define Swtch2 26  // Pin para el switch 2
-#define Alarm   13  // Pin para la alarma
-#define Arduino 12  // Pin para el Arduino
+const int MAX_NEVENTOS = 100; // Número máximo de eventos
+char eventos_pendientes[MAX_NEVENTOS][256]; // Número de eventos pendientes
+int n_eventos_pendientes_envio = 0; // Número de eventos pendientes de envío
+uint32_t numero_eventos=0; // Número de eventos
+uint32_t time_on=0; // Tiempo encendido
 
-
-
-uint16_t get_ADC(int channel);  // Declaración de la función get_ADC
-float voltajeadc=0; // Variable para almacenar el voltaje del ADC
-uint32_t time_on=0; // Variable para almacenar el tiempo encendido
-char timestamp_str [26];    // Variable para almacenar el timestamp
-uint32_t numero_eventos=0;  // Variable para almacenar el número de eventos
-#define MAX_NEVENTOS 300    // Número máximo de eventos
-char eventos_pendientes[MAX_NEVENTOS+1][64];    // Eventos pendientes
-uint16_t n_eventos_pendientes_envio =0; // Número de eventos pendientes de envío
-uint8_t boton1 =0;  // Variable para almacenar el estado del botón 1
-uint8_t boton2 =0;  // Variable para almacenar el estado del botón 2
-uint8_t  swh1=0; // Variable para almacenar el estado del switch 1
-uint8_t  swh2=0; // Variable para almacenar el estado del switch 2
-
-uint8_t   Myswitch1 =0; // Variable para almacenar el estado del switch 1
-
-uint16_t tiempo_buzzer_on = 0;  // Variable para almacenar el tiempo de encendido del buzzer
-
-uint8_t status_led_1= 0;    // Variable para almacenar el estado del LED 1
-
-char linea_status [128];    // Variable para almacenar el estado
-
-char linea_evento[128]; // Variable para almacenar el evento
-
-
-
-//int A; 
-
-int PUSH1 = 0;
-
-int PUSH2 = 0;
-
-int FLG1 = 0;
-
-int FLG2 = 0;
-
-int FLGB = 0;
-
-int LD1 = 0;
-
-int LD2 = 0;
-
-
-
-int sockfd, n;  
-
+int sockfd, n; // Variables para el socket
 unsigned int length; 
-
-struct sockaddr_in server, addr;
-
-char buffer[MSG_SIZE];	
-
+struct sockaddr_in addr, broadcast_addr; // Estructuras para almacenar las direcciones de los sockets
+char buffer[MSG_SIZE]; // Buffer para almacenar el mensaje
 int boolval = 1;	
 
+char message[128]; 
 
+uint16_t get_ADC(int channel); //Función para obtener el valor del ADC	
 
-void Button1(void);
+void RTU1(int sockfd, sockaddr_in& addr, socklen_t& length); // Declaración de la función RTU1
+void agregar_evento(uint8_t evento_id); // Declaración de la función agregar_evento
 
-void Button2(void);
-
-void SWT1(void);
-
-void SWT2(void);
-
-void iotarduino(void);
-
-
-
-void RTU1(void*ptr);
-
-
-
-void update_timestamp();
-
-void update_timestep();
-
-void agregar_evento(uint8_t evento_id);
-
-void listar_eventos();
-
-
-class LightController { // Clase para el control de las luces
-
-public:
-
-    LightController(int pin) : pin_(pin) {
-
-        pinMode(pin_, OUTPUT);
-
-    }
-
-
-
-    void turnOn() {
-
-        digitalWrite(pin_, HIGH);
-
-    }
-
-
-
-    void turnOff() {
-
-        digitalWrite(pin_, LOW);
-
-    }
-
-
-
-private:
-
-    int pin_;
-
-};
-
-
-class ButtonHandler {   // Clase para el control del botón
-
-public:
-
-    ButtonHandler(int pin) : pin_(pin) {
-
-        pinMode(pin_, INPUT);
-
-        pullUpDnControl(pin_, PUD_UP);
-
-    }
-
-
-
-    bool isButtonPressed() {
-
-        return digitalRead(pin_) == HIGH;
-
-    }
-
-
-
-    void waitForButtonRelease() {
-
-        while (isButtonPressed()) {
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        }
-
-    }
-
-
-
-private:
-
-    int pin_;
-
-};
-
-
-
-class SwitchHandler {   // Clase para el control del switch
-public:
-    SwitchHandler(int pin) : pin_(pin) {
-        pinMode(pin_, INPUT);
-        pullUpDnControl(pin_, PUD_UP);
-    }
-
-
-
-    bool isSwitchOn() {
-
-        return digitalRead(pin_) == HIGH;
-
-    }
-
-
-
-    void waitForSwitchOff() {
-
-        while (isSwitchOn()) {
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-        }
-
-    }
-
-
-
-private:
-
-    int pin_;
-
-};
-
-
-class AlarmHandler {    // Clase para el control de la alarma
-
-public:
-
-    AlarmHandler(int pin) : pin_(pin) {
-
-        pinMode(pin_, OUTPUT);
-
-    }
-
-
-
-    void turnOn() {
-
-        digitalWrite(pin_, HIGH);
-
-    }
-
-
-
-    void turnOff() {
-
-        digitalWrite(pin_, LOW);
-
-    }
-
-
-
-private:
-
-    int pin_;
-
-};
-
-
-
-//Crea los objetos de las clases
-
-LightController luz1Ctrl(LUZ_1);    
-LightController luz2Ctrl(LUZ_2);    
-ButtonHandler button1(BTN1);   
-ButtonHandler button2(BTN2);    
-SwitchHandler switch1(Swtch1); 
-SwitchHandler switch2(Swtch2);
-AlarmHandler alarm(Alarm);
-int A = (1/10900)/2; // Constante para el cálculo de la resistencia
-
-void error(const char *msg) {   // Función para imprimir errores
+void error(const char *msg) // Función para imprimir errores
+{
     perror(msg);
-    exit(1);
+    exit(0);
 }
 
 
+class LED { // Clase para controlar LEDs
+    public:
+        LED(int pin) {
+            this->pin = pin;
+            pinMode(pin, OUTPUT);
+        }
 
-//std::string timestamp() {   // Función para obtener el timestamp
+        void on() {
+            digitalWrite(pin, HIGH);
+        }
 
-//    std::time_t t = std::time(nullptr);
+        void off() {
+            digitalWrite(pin, LOW);
+        }
 
-//    char mbstr[100];
+    private:
+        int pin;
+    };
 
-//    std::strftime(mbstr, sizeof(mbstr), "%T", std::localtime(&t));
+class Button { // Clase para controlar botones
+    public:
+        Button(int pin, int eventID) : pin(pin), eventID(eventID) {
+            pinMode(pin, INPUT);
+            pullUpDnControl(pin, PUD_DOWN);
+            wiringPiISR(pin, INT_EDGE_FALLING, &Button::isrWrapper); // Configura la interrupción
+            instance = this; 
+        }
 
-//    return mbstr;
+        bool isPressed() {
+            return digitalRead(pin) == HIGH;
+        }
 
-//}
+        void waitForButtonRelease() {
+            while (isPressed()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
 
+        void isr() { // Función para la interrupción
+            agregar_evento(eventID);
+        }
 
+    private:
+        int pin;
+        int eventID;
+        static Button* instance; 
 
-//std::string update_timestep() { // Función para actualizar el timestamp
+        // Wrapper para llamar a la función de interrupción de la clase
+        static void isrWrapper() {
+            if (instance != nullptr) {
+                instance->isr();
+            }
+        }
+};
 
-//    std::time_t t = std::time(nullptr);
+Button* Button::instance = nullptr; // Inicio de la variable estática
 
-//    char mbstr[100];
+class Button2 { // Clase para controlar botones
+    public:
+        Button2(int pin, int eventID) : pin(pin), eventID(eventID) {
+            pinMode(pin, INPUT);
+            pullUpDnControl(pin, PUD_DOWN);
+            wiringPiISR(pin, INT_EDGE_FALLING, &Button2::isrWrapper); // Configura la interrupción
+            instance = this; 
+        }
 
-//    std::strftime(mbstr, sizeof(mbstr), "%T", std::localtime(&t));
+        bool isPressed() {
+            return digitalRead(pin) == HIGH;
+        }
 
-//    return mbstr;
+        void waitForButtonRelease() {
+            while (isPressed()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
 
-//}
+        void isr() { // Función para la interrupción
+            agregar_evento(eventID);
+        }
 
+    private:
+        int pin;
+        int eventID;
+        static Button2* instance; 
 
+        // Wrapper para llamar a la función de interrupción de la clase
+        static void isrWrapper() {
+            if (instance != nullptr) {
+                instance->isr();
+            }
+        }
+};
 
-void alarm_low_voltage(){ // Función para la alarma de bajo voltaje
-    char mendaje[64];
-    static uint8_t last_alarm_status = 0;
-    if (voltajeadc < 0.5) {
-        agregar_evento(1);
-        last_alarm_status = 1;
-    }
-    else {
-        last_alarm_status = 0;
-        AlarmHandler alarm(Alarm);
-        alarm.turnOff();
-        FLGB = 0;
-    }
+Button2* Button2::instance = nullptr; // Inicio de la variable estática
+
+class Switch { // Clase para controlar switches
+    public:
+        Switch(int pin, int eventID, int& globalSwitch) : pin(pin), eventID(eventID), globalSwitch(globalSwitch) { // Constructor
+            pinMode(pin, INPUT);
+            pullUpDnControl(pin, PUD_UP);
+        }
+
+        void checkState() { // Función para verificar el estado del switch
+            int currentState = digitalRead(pin);
+            if (currentState != previousState) {
+
+                switch (currentState) { // Verifica si el switch está encendido o apagado
+                    case HIGH:
+                        agregar_evento(eventID + 1); 
+                        globalSwitch = 0; 
+                        break;
+                    case LOW:
+                        agregar_evento(eventID);      
+                        globalSwitch = 1;
+                        break;
+                }
+                previousState = currentState; // Actualiza el estado anterior
+            }
+        }
+
+    private:
+        int pin;
+        int eventID;
+        int& globalSwitch;
+        int previousState = HIGH;  // Assuming the initial state is HIGH
+};
+
+//Funciones para orden de eventos
+void listar_eventos(){
+    int i;
+    printf("listado eventos\n");
+    for (i=0; i< n_eventos_pendientes_envio; i++){ 
+
+        std::cout << eventos_pendientes[i] << std::endl; // Imprime los eventos pendientes
+
+        //Manda los eventos pendientes
+        n = sendto(sockfd, eventos_pendientes[i], MAX_NEVENTOS, 0, 
+        (struct sockaddr *)&addr, sizeof(struct sockaddr));
+	    if(n < 0)
+		    std::cerr << "Error en sendto" << std::endl; //Verifica si hubo error     
+        }
+    n_eventos_pendientes_envio = 0; // Reinicia el número de eventos pendientes de envío
 }
 
 
+void agregar_evento(uint8_t evento_id) { // Función para agregar eventos
+    struct timeval current_time; // Estructura para almacenar el tiempo actual
+    gettimeofday(&current_time, NULL); // Obtiene el tiempo actual
 
-void alarm_high_voltage(){ // Función para la alarma de alto voltaje
-    char mendaje[64];
-    static uint8_t last_alarm_status = 0;
-    if (voltajeadc > 2.5) {
-        agregar_evento(2);
-        last_alarm_status = 1;
-    }
-    else {
-        last_alarm_status = 0;
-        AlarmHandler alarm(Alarm);
-        alarm.turnOff();
-        FLGB = 0;
-    }
-}
+    struct timeval tv; 
+    gettimeofday(&tv, NULL); 
+    time_t now = tv.tv_sec;
+    struct tm* timeinfo = localtime(&now); // Obtiene la fecha y hora actual
+    char timestamp[80];
+    strftime(timestamp, 80, "%Y-%m-%d %H:%M:%S", timeinfo); // Formato de la fecha y hora
 
-int main(int argc, char* argv[]) {
-    wiringPiSetupGpio();    // Inicializa la librería wiringPi
+    numero_eventos++;
 
-    //Configura las interrupciones
-    wiringPiISR(LUZ_1, INT_EDGE_BOTH, Button1);
-    wiringPiISR(LUZ_2, INT_EDGE_BOTH, Button2);
-    wiringPiISR(Swtch1, INT_EDGE_BOTH, SWT1);
-    wiringPiISR(Swtch2, INT_EDGE_BOTH, SWT2);
-    wiringPiISR(Arduino, INT_EDGE_BOTH, iotarduino);
+    // Formato del mensaje
+    std::sprintf(message, "RTU1 %d %s %d %d%d %d%d %d %d%d %0.2f",
+             evento_id, timestamp, static_cast<int>(current_time.tv_usec / 1000),
+             switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2, voltajeadc);
 
-    std::srand(time(NULL)); // Inicializa la semilla para la función rand()
+    std::cout << "Mandando Mensaje: " << message << std::endl; // Imprime el mensaje
 
-    if (wiringPiSPISetup(SPI_CHAN, SPI_SPEED) < 0) {    // Verifica si se pudo inicializar el bus SPI
-        std::cout << "No se pudo inicializar el SPI" << std::endl;
-        return -1;
-    }
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);    // Crea el socket UDP (SOCK_DGRAM)
-    if (sockfd < 0) error("ERROR opening socket");  // Verifica si hubo un error al crear el socket
-    length = sizeof(server);    // Obtiene el tamaño de la estructura 'server'
-    bzero(&server,length);  // Llena la estructura 'server' con ceros
-    server.sin_family=AF_INET;   // Asigna el tipo de dirección (IPv4)
-    server.sin_addr.s_addr=inet_addr(IP);   // Asigna la dirección IP del servidor
-    server.sin_port=htons(atoi(argv[1]));   // Asigna el puerto del servidor
-    if (bind(sockfd,(struct sockaddr *)&server,length)<0) error("ERROR on binding");   // Asocia el socket con la dirección y el puerto
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &boolval, sizeof(boolval)) < 0) error("ERROR setting socket options");  // Habilita la opción de broadcast en el socket
-
-    uint16_t ADCvalue;  
-    while (1){
-        time_on++;  // Incrementa el tiempo encendido
-        update_timestamp(); // Actualiza el timestamp
-        ADCvalue = get_ADC(ADC_CHANNEL);    // Obtiene el valor del ADC
-    if ((time_on %20) == 0) // Verifica si se cumplió el tiempo
-    {
-        agregar_evento(0); // Agrega el evento 0
+    // Se copia el mensaje en el arreglo de eventos pendientes
+    if (n_eventos_pendientes_envio < MAX_NEVENTOS) {
+        std::strcpy(eventos_pendientes[n_eventos_pendientes_envio], message);
+        n_eventos_pendientes_envio++;
     }
 
-    //Verifica condiciones de alarma
-    alarm_low_voltage();   
-    alarm_high_voltage();   
+};
 
-    if(voltajeadc > 2.5){   // Verifica si el voltaje es mayor a 2.5V
-        alarm.turnOn();
+int main(int argc, char *argv[]) { // Función principal
+    wiringPiSetupGpio(); // Inicializa la librería wiringPi
+    pinMode(Alarm, OUTPUT); // Configura el pin de la alarma como salida
+    uint16_t ADCvalue; // Variable para almacenar el valor del ADC
+    int last_alarm_statusH=0; // Variable para almacenar el estado de la alarma
+    int last_alarm_statusL=0; 
+
+    // Configuración del bus SPI
+    if (wiringPiSPISetup(SPI_CHANNEL, SPI_SPEED) < 0) {
+        std::cerr << "Error setting up SPI" << std::endl;
+        return 1;  // Verifica si hubo error
     }
-    if(voltajeadc < 0.5){   // Verifica si el voltaje es menor a 0.5V
-        alarm.turnOn();
-    }
-    else if (voltajeadc > 0.5 && voltajeadc < 2.5)  // Verifica si el voltaje está entre 0.5V y 2.5V
-    {
-        alarm.turnOff();
+    //Se crean los objetos de las clases
+    LED luz1(LUZ_1); 
+    LED luz2(LUZ_2);
+    Button btn1(BTN1, 1);
+    Button2 btn2(BTN2, 2);
+    Switch swtch1(Swtch1,3,switch1);
+    Switch swtch2(Swtch2,5, switch2);
+    digitalWrite(Alarm, LOW); 
+    
+   if(argc != 2) // Verifica si se ingresó el puerto
+	{
+	    std::cout << "Usage: " << argv[0] << " [port]" << std::endl;
+        exit(1);
+	}
+
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0); // Crea socket UDP sin conexión
+    if(sockfd < 0)
+		std::cerr << "Opening socket" << std::endl; // Verifica si hubo error al crear el socket
+
+	addr.sin_family = AF_INET; // Configura la familia de direcciones
+	addr.sin_port = htons(atoi(argv[1]));	 // Configura el puerto
+
+    length = sizeof(addr); // Tamaño de la dirección
+
+	if(bind(sockfd, (struct sockaddr *)&addr, length) < 0) // Asigna el socket
+		std::cerr << "Error binding socket." << std::endl;
+
+	// Cambia los permisos del socket para permitir el broadcast
+	if(setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &boolval, sizeof(boolval)) < 0)
+  		std::cerr << "Error setting socket options\n" << std::endl;
+    
+    addr.sin_addr.s_addr = inet_addr(IP); // Configura la dirección IP
+
+    std::thread rtuThread(RTU1, sockfd, std::ref(addr), std::ref(length)); // Crea el hilo de la función RTU1
+
+    while (true) { // Ciclo infinito
+        time_on++; // Incrementa el tiempo encendido
+        ADCvalue =get_ADC(ADC_CHANNEL); // Obtiene el valor del ADC
+        PUSH1 = 0; 
+        PUSH2 = 0; 
+        if (btn1.isPressed()) { // Verifica si el botón 1 está presionado
+            PUSH1 = 1;      
+        }
+        if (btn2.isPressed()) { // Verifica si el botón 2 está presionado
+            PUSH2 = 1;
+        }
+        swtch1.checkState(); // Verifica el estado del switch 1
+        swtch2.checkState(); // Verifica el estado del switch 2
+
+        //Condicionales para la alarma con el ADC
+        if (voltajeadc < 0.5) {
+            if(last_alarm_statusL == 0){
+                agregar_evento(15);
+                last_alarm_statusL = 1;
+                digitalWrite(Alarm, HIGH);
+            }
+        } else if (voltajeadc > 2.5) {
+            if(last_alarm_statusH == 0){
+                agregar_evento(16);
+                last_alarm_statusH = 1;
+                digitalWrite(Alarm, HIGH);
+            }
+        }else if ((voltajeadc < 2.5)&&(voltajeadc > 0.5)){
+            digitalWrite(Alarm, LOW);
+            last_alarm_statusL = 0;
+            last_alarm_statusH = 0;
+        }
+
+        if ((time_on %15) == 0){ //Cada 15 segundos se agrega un evento
+            agregar_evento (0);
+        }
+        fflush(stdout);
+        if ((time_on % 15)==0){ //Cada 15 segundos se imprime el número de eventos
+           listar_eventos(); // Llama a la función para listar los eventos
+            if (n_eventos_pendientes_envio >0){ // Verifica si hay eventos pendientes de envío
+                std::cout << "Hay eventos pendientes de envío" << std::endl;
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Espera 1 segundo
     }
 
-        
-    std::cout << std::flush;    // Limpia el buffer de salida
-    if ((time_on % 20) == 0)    
-    {
-        listar_eventos();   // Lista los eventos
-        if (n_eventos_pendientes_envio > 0) // Verifica si hay eventos pendientes de envío
-        {
-            std::cout << "Enviando eventos pendientes" << std::endl;
-            listar_eventos();
-        }           
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));  // Espera 1ms
-    }
+    rtuThread.join(); // Espera a que termine el hilo
     return 0;
 }
 
+void RTU1(int sock, sockaddr_in& addres, socklen_t& leng){ // Función para la RTU1
+    LED luz1(LUZ_1);
+    LED luz2(LUZ_2);
+    int i2cAddress = 0x08; // Dirección del dispositivo I2C
+
+    // Comunicación I2C abierta
+    int i2cHandle = wiringPiI2CSetup(i2cAddress);
+    if (i2cHandle == -1) {
+        std::cerr << "Error opening I2C communication." << std::endl; // Verifica si hubo error
+        return;
+    }
+
+    while (1){ 
+
+        memset(buffer, 0, MSG_SIZE); // Limpia el buffer
+        n = recvfrom(sock, buffer, MSG_SIZE, 0, (struct sockaddr*)&addres, &leng); // Recibe el mensaje
+        if (n < 0){
+            perror("ERROR reading from socket (revfrom)"); // Verifica si hubo error
+        } 
+        std::cout << "Message recibido (" << n << " bytes): " << buffer << std::endl; // Imprime el mensaje recibido
 
 
-
-
-void RTU1(void*ptr){    // Función para el control de la RTU1
-    while (1)
-    {
-        memset(buffer, 0, MSG_SIZE);    // Limpia el buffer
-        n = recvfrom(sockfd, buffer, MSG_SIZE, 0, (struct sockaddr*)&addr, &length);
-        if (n < 0) error("ERROR in recvfrom");  // Verifica si hubo error
-        std::cout << "Received a datagram. It says: " << buffer << std::endl;   // Imprime el mensaje recibido
-
-        if (n < 0) error("ERROR in sendto");    // Verifica si hubo error
-        
-        if((std::strcmp(buffer, "RTU1 LED1 ON") == 0)){    // Verifica si se recibió el comando para encender el LED1 de la RTU1
-            char mensaje[64];
-            std::cout << "LED1 ON" << std::endl;
-            std::cout << std::flush;
-            luz1Ctrl.turnOn();
+        if((std::strcmp(buffer, "RTU1 LED1 1") == 0)){ // Verifica si el mensaje es para encender el LED 1
+            char mensaje[60];
+            luz1.on();
             LD1 = 1;
-            std::strcpy(buffer, "LED1 ON");
-            std::cout << std::flush;
-            std::sprintf(mensaje, "LED indicador 1 encendido");
-            std::cout << std::flush;
+            agregar_evento(9); // Agrega el evento 9
+        }
+        if((std::strcmp(buffer, "RTU1 LED1 0") == 0)){ // Verifica si el mensaje es para apagar el LED 1
+            char mensaje[60];
+            luz1.off();
+            LD1 = 0;
+            agregar_evento(10);
+        }
+        if((std::strcmp(buffer, "RTU1 LED2 1") == 0)){ // Verifica si el mensaje es para encender el LED 2
+            char mensaje[60];
+            luz2.on();
+            LD2 = 1;
             agregar_evento(11);
         }
-        if ((std::strcmp(buffer, "RTU1 LED1 OFF") == 0))    // Verifica si se recibió el comando para apagar el LED1 de la RTU1
-        {
-            char mensaje[64];
-            std::cout << "LED1 OFF" << std::endl;
-            std::cout << std::flush;
-
-            luz1Ctrl.turnOff();
-            LD1 = 0;
-            std::strcpy(buffer, "LED1 OFF");
-            std::cout << std::flush;
-            std::sprintf(mensaje, "LED indicador 1 apagado");
-            std::cout << std::flush;
+        if((std::strcmp(buffer, "RTU1 LED2 0") == 0)){ // Verifica si el mensaje es para apagar el LED 2
+            char mensaje[60];
+            luz2.off();
+            LD2 = 0;
             agregar_evento(12);
         }
-        if((std::strcmp(buffer, "RTU1 LED2 ON") == 0)){    // Verifica si se recibió el comando para encender el LED2 de la RTU1
-            char mensaje[64];
-            std::cout << "LED2 ON" << std::endl;
-            std::cout << std::flush;
-
-            luz2Ctrl.turnOn();
-            LD2 = 1;
-            std::strcpy(buffer, "LED2 ON");
-            std::cout << std::flush;
-            std::sprintf(mensaje, "LED indicador 2 encendido");
-            std::cout << std::flush;
+        if((std::strcmp(buffer, "RTU1 LEDIoT 1") == 0)){ // Verifica si el mensaje es para encender el LED IoT
+            char mensaje[60];
+            char data1[] = "A"; 
+            status_led_1 = 1;
             agregar_evento(13);
+            write(i2cHandle, data1, sizeof(data1)); // Escribe en el bus I2C para mandar el mensaje al Arduino
         }
-        if((std::strcmp(buffer, "RTU1 LED2 OFF") == 0)){   // Verifica si se recibió el comando para apagar el LED2 de la RTU1
-            char mensaje[64];
-            std::cout << "LED2 OFF" << std::endl;
-            std::cout << std::flush;
-
-            luz2Ctrl.turnOff();
-            LD2 = 0;
-            std::strcpy(buffer, "LED2 OFF");
-            std::cout << std::flush;
-            std::sprintf(mensaje, "LED indicador 2 apagado");
-            std::cout << std::flush;
+        if((std::strcmp(buffer, "RTU1 LEDIoT 0") == 0)){ // Verifica si el mensaje es para apagar el LED IoT
+            char mensaje[60]; 
+            char data0[] = "B";
+            status_led_1 = 0;
             agregar_evento(14);
+            write(i2cHandle, data0, sizeof(data0)); // Escribe en el bus I2C para mandar el mensaje al Arduino
         }
     }
+    close(i2cHandle); // Cierra la comunicación I2C
 }
 
-uint16_t get_ADC(int channel){  // Función para obtener el valor del ADC
-    uint8_t spiData[2];
-    uint16_t resultado;
-    if((channel > 1) || (channel < 0)){ // Verifica si el canal es válido
-        channel = 0;
-    }
-    spiData[0] = 0b01101000 | (channel << 4);   // Configura el canal
-    spiData[1] = 0; 
-    wiringPiSPIDataRW(SPI_CHAN, spiData, 2);    // Lee el valor del ADC
-    resultado = ((spiData[0]) << 8) | spiData[1];   // Almacena el valor del ADC
-    voltajeadc = (resultado * 3.3) / 1023;  // Calcula el voltaje del ADC
-    return resultado;
+uint16_t get_ADC(int ADC_chan)
+{
+	uint8_t spiData[2];	// La comunicación usa dos bytes
+	uint16_t resultado;
+	
+	// Asegurarse que el canal sea válido. Si lo que viene no es válido, usar canal 0.
+	if((ADC_chan < 0) || (ADC_chan > 1))
+		ADC_chan = 0;
 
+	// Construimos el byte de configuración: 0, start bit, modo, canal, MSBF: 01MC1000
+	spiData[0] = 0b01101000 | (ADC_chan << 4);  // M = 1 ==> "single ended"
+												// C: canal: 0 ó 1
+	spiData[1] = 0;	// "Don't care", este valor no importa.
+	
+	// La siguiente función realiza la transacción de escritura/lectura sobre el bus SPI
+	// seleccionado. Los datos que estaban en el buffer spiData se sobreescriben por
+	// los datos que vienen por SPI.
+	wiringPiSPIDataRW(SPI_CHANNEL, spiData, 2);	// 2 bytes
+	
+	// spiData[0] y spiData[1] tienen el resultado (2 bits y 8 bits, respectivamente)
+	resultado = (spiData[0] << 8) | spiData[1];
+	voltajeadc=(resultado*3.3)/1023.0;
+	return(resultado);
 }
-
-
-
-
-void Button1(void){ // Función para el control del botón 1
-    char mensaje[64];
-    int status_B1;
-    get_ADC(ADC_CHANNEL);
-    PUSH1 = !button1.isButtonPressed();
-    status_B1 = 0;
-
-    if(PUSH1 == 1){
-        status_B1 = 1;
-        agregar_evento(3);
-    }
-}
-
-
-
-void Button2(void){ // Función para el control del botón 2
-    char mensaje[64];
-    int status_B2;
-    get_ADC(ADC_CHANNEL);
-    PUSH2 = !button2.isButtonPressed();
-    status_B2 = 0;
-    if(PUSH2 == 1){
-        status_B2 = 1;
-        agregar_evento(4);
-    }
-}
-
-
-
-void SWT1(void){    // Función para el control del switch 1
-    char mensaje[64];
-    switch1 = !switch1.isSwitchOn();
-    get_ADC(ADC_CHANNEL);
-
-    if(Swtch1 == 1){
-        agregar_evento(5);
-    }
-
-    if(Swtch1 == 0){
-        agregar_evento(6);
-    }
-}
-
-
-
-void SWT2(void){    // Función para el control del switch 2
-
-    char mensaje[64];
-
-    switch2 = !switch2.isSwitchOn();
-
-    get_ADC(ADC_CHANNEL);
-
-    
-
-    if(Swtch2 == 1){
-
-        std::sprintf(mensaje,"7\t%0.2f\n", voltajeadc);
-
-        std::cout << std::flush;
-
-        agregar_evento(7);
-
-    }
-
-    if(Swtch2 == 0){
-
-        std::sprintf(mensaje,"8\t%0.2f\n", voltajeadc);
-
-        std::cout << std::flush;
-
-        agregar_evento(8);
-
-    }
-
-}
-
-
-
-void iotarduino(void){  // Función para el control del Arduino
-
-    char mensaje[64];
-
-    status_led_1 = digitalRead(Arduino);
-
-    get_ADC(ADC_CHANNEL);
-
-
-
-    if(status_led_1 == 1){
-
-        agregar_evento(9);
-
-    }
-
-    if(status_led_1 == 0){
-
-        agregar_evento(10);
-
-    }
-
-}
-
-
-
-
-
-void listar_eventos(){  // Función para listar los eventos
-
-    int i; // Declara una variable entera llamada 'i'
-
-
-
-    for (i = 0; i < n_eventos_pendientes_envio; i++)    
-
-    {
-
-        std::cout << eventos_pendientes[i] << std::endl; // Imprime el evento actual
-
-        server.sin_addr.s_addr = inet_addr(IP); // Configura la dirección IP del servidor
-
-        n = sendto(sockfd, eventos_pendientes[i], MAX_NEVENTOS, 0, (struct sockaddr*)&server, length); // Envía el evento al servidor
-
-        if (n < 0) error("Sendto"); // Si hay un error en el envío, imprime un mensaje de error
-
-    }
-
-    n_eventos_pendientes_envio = 0; // Reinicia el contador de eventos pendientes para envío
-
-}
-
-
-
-void agregar_evento(uint8_t evento_id){
-
-    struct timeval current_time; // Estructura para almacenar el tiempo actual
-
-    gettimeofday(&current_time, NULL); // Obtiene el tiempo actual
-
-    //current_time_usec = current_time.tv_usec; // Almacena los microsegundos actuales
-
-    {
-        gettimeofday(&current_time, NULL); // Obtiene el tiempo actual
-        std::sprintf(linea_evento, "%s %ld.%06ld", timestamp_str, current_time.tv_sec, current_time.tv_usec); // Formatea el evento con timestamp
-        numero_eventos++; // Incrementa el contador de eventos
-        update_timestep(); // Actualiza el paso de tiempo
-    };
-
-
-    std::sprintf(linea_evento, "RTU1 %02d %s.%03d %d%d %d%d %d %d%d %.2f\n", evento_id, timestamp_str, current_time.tv_usec / 1000, switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2, voltajeadc);
-    std::printf("%s", linea_evento); // Imprime el evento
-
-    if (n_eventos_pendientes_envio < MAX_NEVENTOS) {
-        std::strcpy(eventos_pendientes[n_eventos_pendientes_envio], evento); // Copia el evento a la lista de eventos pendientes
-        n_eventos_pendientes_envio++; // Incrementa el contador de eventos pendientes para envío
-    }
-
-}
-
-
-
-
-
-void update_timestamp(){ // Función para actualizar el timestamp
-
-    struct timeval current_time; // Estructura para almacenar el tiempo actual
-
-    gettimeofday(&current_time, NULL); // Obtiene el tiempo actual
-
-    // Formatea el timestamp con milisegundos
-
-    std::sprintf(timestamp_str, "%s.%03d", timestamp(), current_time.tv_usec / 1000); 
-
-    current_time_usec = current_time.tv_usec; // Almacena los microsegundos actuales
-
-}
-
-
-
-
-
-void update_timestep(){
-
-    struct timeval current_time; // Estructura para almacenar el tiempo actual
-
-    gettimeofday(&current_time, NULL); // Obtiene el tiempo actual
-
-    // Formatea el timestamp con milisegundos
-
-    std::sprintf(timestamp_str, "%s.%03d", timestamp(), current_time.tv_usec / 1000); 
-
-    current_time_usec = current_time.tv_usec; // Almacena los microsegundos actuales
-
-}
-
-
-
-
-
-
 

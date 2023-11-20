@@ -16,7 +16,8 @@
 #include <sys/socket.h> // Librería para utilizar sockets
 #include <netinet/in.h> // Librería para utilizar direcciones de internet
 #include <arpa/inet.h>  // Librería para manipular direcciones IP
-#include <fstream>
+#include <fstream>      //Librería para utilizar archivos
+
 
 #define MSG_SIZE 3000 // Tamaño del mensaje
 #define IP "192.168.1.255" // Dirección IP
@@ -29,6 +30,8 @@ char buffer[MSG_SIZE];	// Buffer para almacenar el mensaje
 int boolval = 1;		// Opción de socket
 char IP_broadcast[IP_LENGTH]; 
 
+bool shouldExit = false; 
+
 void enviar(void*ptr); // Declaración de la función enviar
 
 void error(const char *msg) // Función para imprimir errores
@@ -37,12 +40,13 @@ void error(const char *msg) // Función para imprimir errores
     exit(0);
 }
 
+
 void receiving(int sock, std::ofstream& outputFile) // Función para recibir mensajes
 {
     char buffer[MSG_SIZE]; // Buffer para almacenar el mensaje
     struct sockaddr_in from; // Estructura para almacenar la dirección del emisor
 
-    while (true) 
+    while (!shouldExit) 
     {
         memset(buffer, 0, MSG_SIZE); 
         int n = recvfrom(sock, buffer, MSG_SIZE, 0, reinterpret_cast<struct sockaddr *>(&from), &length); // Recibe el mensaje
@@ -51,12 +55,18 @@ void receiving(int sock, std::ofstream& outputFile) // Función para recibir men
 
         std::cout << "Esto se recibió: " << buffer << std::endl; // Imprime el mensaje recibido
         outputFile << buffer << std::endl; // Escribe el mensaje en el archivo de salida
+        if (std::strcmp(buffer, "!") == 0) // Verifica si el mensaje es "!"
+        {
+            shouldExit = true; // Establece shouldExit en true para salir del programa
+            break;
+        }
     }
 }
 
+
 int main(int argc, char *argv[]) // Función principal
-{
-    std::ofstream outputFile("output.txt");
+{   
+    std::ofstream outputFile("Lista de Eventos.txt");
 
     // Check if the file is successfully opened
     if (!outputFile.is_open()) {
@@ -102,6 +112,8 @@ int main(int argc, char *argv[]) // Función principal
 
     std::cout << "Los comandos son los siguientes:" << std::endl; // Imprime los comandos
     std::cout << "RTU# LED# 0 o 1" << std::endl;
+    std::cout << "RTU# LEDIoT 0 o 1" << std::endl;
+    std::cout << "Utilizar ! para salir: " << std::endl; 
     RTU.sin_addr.s_addr = inet_addr(IP);
     char CONEXION[128]; // Variable para almacenar el mensaje
     
@@ -110,24 +122,24 @@ int main(int argc, char *argv[]) // Función principal
     if (n < 0){
         std::cerr << "ERROR al enviar" << std::endl; // Verifica si hubo error
     } 
-    
-    while (1)
+    while (!shouldExit)
     {
         memset(buffer, 0, MSG_SIZE);
         receiving(sockfd, outputFile);
     }
+    hilo1.join();
     outputFile.close(); // Cierra el archivo de salida
+    std::cout << "Saliendo del Programa" << std::endl;
     return 0;
 }
 
 void enviar(void*ptr) // Función para enviar mensajes
 {
-    while(1){
+    while(!shouldExit){
         memset(buffer, 0, MSG_SIZE); // Limpia el buffer
-        std::cout << "Utilizar ! para salir: " << std::endl; 
         std::cin.getline(buffer, MSG_SIZE - 1); // Lee el mensaje
 
-        std::cout << "Sending message: " << buffer << std::endl;
+        std::cout << "Mandando mensaje: " << buffer << std::endl;
         n = sendto(sockfd, buffer, strlen(buffer), 0,
         (const struct sockaddr *)&RTU, length);
         if (n < 0) error("ERROR sendto");
@@ -181,6 +193,6 @@ void enviar(void*ptr) // Función para enviar mensajes
             n = sendto(sockfd, buffer, strlen(buffer), 0, 
             (const struct sockaddr *)&RTU, length);
             if (n < 0) error("ERROR sendto");
-        }            
+        }  
     }
 }
