@@ -12,12 +12,12 @@
 #include <wiringPi.h> // Librería para controlar pines GPIO
 
 // Definición de pines para los LEDs
-#define LED1  8 // Se define el pin 8 para el LED 1
-#define LED2  9 // Se define el pin 9 para el LED 2
+#define LED1  8 // Se define el pin para el LED 1
+#define LED2  9 // Se define el pin para el LED 2
 #define MAX_RANDOM 1000000 // Valor máximo para la generación de números random
 
 int main() {
-    std::rand(std::time(0)); // Semilla de la generación de números aleatorios basada en el tiempo actual
+    std::srand(static_cast<unsigned>(std::time(0))); // Semilla de la generación de números aleatorios basada en el tiempo actual
 
     if (wiringPiSetup() == -1) { // Verificar si se inicializó WiringPi correctamente
         std::cerr << "Error initializing WiringPi." << std::endl;

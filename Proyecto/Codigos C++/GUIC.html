@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .display-window {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      min-height: 100px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Button Demo</h1>
+
+  <!-- Buttons -->
+  <button onclick="displayText('Button 1')">Button 1</button>
+  <button onclick="displayText('Button 2')">Button 2</button>
+  <button onclick="displayText('Button 3')">Button 3</button>
+  <button onclick="displayText('Button 4')">Button 4</button>
+  <button onclick="displayText('Button 5')">Button 5</button>
+  <button onclick="displayText('Button 6')">Button 6</button>
+  <button onclick="displayText('Button 7')">Button 7</button>
+  <button onclick="displayText('Button 8')">Button 8</button>
+  <button onclick="displayText('Button 9')">Button 9</button>
+  <button onclick="displayText('Button 10')">Button 10</button>
+  <button onclick="displayText('Button 11')">Button 11</button>
+  <button onclick="displayText('Button 12')">Button 12</button>
+
+  <!-- Display Windows -->
+  <div id="display-window" class="display-window"></div>
+  <div id="additional-display-window" class="display-window"></div>
+
+  <script>
+    function displayText(text) {
+      document.getElementById('display-window').innerText = text;
+      document.getElementById('additional-display-window').innerText = "information";
+    }
+  </script>
+
+</body>
+</html>

@@ -7,7 +7,7 @@
 
 #include <iostream> //Librería estándar de entrada/salida
 #include <cstdio>   //Librería estándar de entrada/salida
-#include <cstdlib>  //Librería estándar para funciones generales (Se incluye para utilizar la función rand)
+#include <cstdlib>  //Librería estándar para funciones generales
 #include <thread>   //Librería para utilizar hilos
 #include <chrono>   //Librería para utilizar la función sleep_for
 #include <string>   //Librería para la manipulación de cadenas
@@ -17,10 +17,8 @@
 #include <unistd.h> //Librería que proporciona funciones y constantes específicas de sistemas Unix.
 #include <linux/types.h> // Librería que contiene definiciones de tipos de datos comunes en sistemas Linux
 #include <sched.h> //Librería para utilizar la planificación
-#include <fstream>
+#include <fstream> //Librería para utilizar archivos
 
-//#include <fcntl.h>
-//#include <getopt.h>
 
 
 #define MI_PRIORIDAD 10  // Rango entre 1 y 99. A mayor valor, más alta la prioridad
@@ -114,7 +112,7 @@ void Tercero(char *Buff) { //Función del hilo 3
     wait_period(timer_fd);
 
     for (i = 0; i < MAX_CADENAS; i++) { //Se recorre el arreglo de cadenas
-        //std::string(StringArray[i], Buff); //Se copia la cadena en el arreglo
+
         std::strcpy(StringArray[i], Buff); //Se copia la cadena en el arreglo
         wait_period(timer_fd); //Se espera el periodo
     }

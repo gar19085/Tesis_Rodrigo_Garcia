@@ -62,7 +62,6 @@ private:
     int pin_;
 };
 
-//std::binary_semaphore sem(1); // Declaración del semáforo
 
 void luz(LightController &light, int priority) { // Función para el control de las luces
     struct sched_param param; //Se define una estructura para la planificación

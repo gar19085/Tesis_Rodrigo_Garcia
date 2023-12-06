@@ -1,0 +1,144 @@
+/********************************************************************************
+** Form generated from reading UI file 'mainwindowQgfVBP.ui'
+**
+** Created by: Qt User Interface Compiler version 5.15.3
+**
+** WARNING! All changes made in this file will be lost when recompiling UI file!
+** Codigo generado al diseñar la interfaz
+********************************************************************************/
+
+#ifndef MAINWINDOWQGFVBP_H
+#define MAINWINDOWQGFVBP_H
+
+#include <QtCore/QVariant>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QStatusBar>
+#include <QtWidgets/QTextBrowser>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QWidget>
+
+QT_BEGIN_NAMESPACE
+
+class Ui_MainWindow
+{
+public:
+    QWidget *centralwidget;
+    QPushButton *Exit;
+    QTextBrowser *textBrowser;
+    QPushButton *RTU1L11;
+    QPushButton *RTU1L10;
+    QPushButton *RTU1L21;
+    QPushButton *RTU1L20;
+    QPushButton *RTU1LI1;
+    QPushButton *RTU1LI0;
+    QPushButton *pushButton_7;
+    QPushButton *RTU2L11;
+    QPushButton *RTU2L20;
+    QPushButton *RTU2LI1;
+    QPushButton *RTU2L21;
+    QPushButton *RTU2L10;
+    QTextEdit *textEdit;
+    QMenuBar *menubar;
+    QStatusBar *statusbar;
+
+    void setupUi(QMainWindow *MainWindow)
+    {
+        if (MainWindow->objectName().isEmpty())
+            MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
+        MainWindow->resize(496, 475);
+        centralwidget = new QWidget(MainWindow);
+        centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
+        Exit = new QPushButton(centralwidget);
+        Exit->setObjectName(QString::fromUtf8("Exit"));
+        Exit->setGeometry(QRect(400, 0, 89, 25));
+        textBrowser = new QTextBrowser(centralwidget);
+        textBrowser->setObjectName(QString::fromUtf8("textBrowser"));
+        textBrowser->setGeometry(QRect(130, 0, 231, 31));
+        RTU1L11 = new QPushButton(centralwidget);
+        RTU1L11->setObjectName(QString::fromUtf8("RTU1L11"));
+        RTU1L11->setGeometry(QRect(20, 40, 101, 25));
+        RTU1L10 = new QPushButton(centralwidget);
+        RTU1L10->setObjectName(QString::fromUtf8("RTU1L10"));
+        RTU1L10->setGeometry(QRect(130, 40, 101, 25));
+        RTU1L21 = new QPushButton(centralwidget);
+        RTU1L21->setObjectName(QString::fromUtf8("RTU1L21"));
+        RTU1L21->setGeometry(QRect(20, 70, 101, 25));
+        RTU1L20 = new QPushButton(centralwidget);
+        RTU1L20->setObjectName(QString::fromUtf8("RTU1L20"));
+        RTU1L20->setGeometry(QRect(130, 70, 101, 25));
+        RTU1LI1 = new QPushButton(centralwidget);
+        RTU1LI1->setObjectName(QString::fromUtf8("RTU1LI1"));
+        RTU1LI1->setGeometry(QRect(20, 100, 101, 25));
+        RTU1LI0 = new QPushButton(centralwidget);
+        RTU1LI0->setObjectName(QString::fromUtf8("RTU1LI0"));
+        RTU1LI0->setGeometry(QRect(130, 100, 101, 25));
+        pushButton_7 = new QPushButton(centralwidget);
+        pushButton_7->setObjectName(QString::fromUtf8("pushButton_7"));
+        pushButton_7->setGeometry(QRect(370, 100, 101, 25));
+        RTU2L11 = new QPushButton(centralwidget);
+        RTU2L11->setObjectName(QString::fromUtf8("RTU2L11"));
+        RTU2L11->setGeometry(QRect(260, 40, 101, 25));
+        RTU2L20 = new QPushButton(centralwidget);
+        RTU2L20->setObjectName(QString::fromUtf8("RTU2L20"));
+        RTU2L20->setGeometry(QRect(370, 70, 101, 25));
+        RTU2LI1 = new QPushButton(centralwidget);
+        RTU2LI1->setObjectName(QString::fromUtf8("RTU2LI1"));
+        RTU2LI1->setGeometry(QRect(260, 100, 101, 25));
+        RTU2L21 = new QPushButton(centralwidget);
+        RTU2L21->setObjectName(QString::fromUtf8("RTU2L21"));
+        RTU2L21->setGeometry(QRect(260, 70, 101, 25));
+        RTU2L10 = new QPushButton(centralwidget);
+        RTU2L10->setObjectName(QString::fromUtf8("RTU2L10"));
+        RTU2L10->setGeometry(QRect(370, 40, 101, 25));
+        textEdit = new QTextEdit(centralwidget);
+        textEdit->setObjectName(QString::fromUtf8("textEdit"));
+        textEdit->setGeometry(QRect(20, 140, 461, 291));
+        MainWindow->setCentralWidget(centralwidget);
+        menubar = new QMenuBar(MainWindow);
+        menubar->setObjectName(QString::fromUtf8("menubar"));
+        menubar->setGeometry(QRect(0, 0, 496, 22));
+        MainWindow->setMenuBar(menubar);
+        statusbar = new QStatusBar(MainWindow);
+        statusbar->setObjectName(QString::fromUtf8("statusbar"));
+        MainWindow->setStatusBar(statusbar);
+
+        retranslateUi(MainWindow);
+
+        QMetaObject::connectSlotsByName(MainWindow);
+    } // setupUi
+
+    void retranslateUi(QMainWindow *MainWindow)
+    {
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
+        Exit->setText(QCoreApplication::translate("MainWindow", "Salir", nullptr));
+        textBrowser->setHtml(QCoreApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Menu Historiador</p></body></html>", nullptr));
+        RTU1L11->setText(QCoreApplication::translate("MainWindow", "RTU1 LED1 1", nullptr));
+        RTU1L10->setText(QCoreApplication::translate("MainWindow", "RTU1 LED1 0", nullptr));
+        RTU1L21->setText(QCoreApplication::translate("MainWindow", "RTU1 LED2 1", nullptr));
+        RTU1L20->setText(QCoreApplication::translate("MainWindow", "RTU1 LED2 0", nullptr));
+        RTU1LI1->setText(QCoreApplication::translate("MainWindow", "RTU1 LEDIoT 1", nullptr));
+        RTU1LI0->setText(QCoreApplication::translate("MainWindow", "RTU1 LEDIoT 0", nullptr));
+        pushButton_7->setText(QCoreApplication::translate("MainWindow", "RTU2 LEDIoT 0", nullptr));
+        RTU2L11->setText(QCoreApplication::translate("MainWindow", "RTU2 LED1 1", nullptr));
+        RTU2L20->setText(QCoreApplication::translate("MainWindow", "RTU2 LED2 0", nullptr));
+        RTU2LI1->setText(QCoreApplication::translate("MainWindow", "RTU2 LEDIoT 1", nullptr));
+        RTU2L21->setText(QCoreApplication::translate("MainWindow", "RTU2 LED2 1", nullptr));
+        RTU2L10->setText(QCoreApplication::translate("MainWindow", "RTU2 LED1 0", nullptr));
+    } // retranslateUi
+
+};
+
+namespace Ui {
+    class MainWindow: public Ui_MainWindow {};
+} // namespace Ui
+
+QT_END_NAMESPACE
+
+#endif // MAINWINDOWQGFVBP_H

@@ -68,10 +68,10 @@ int main(int argc, char *argv[]) // Función principal
 {   
     std::ofstream outputFile("Lista de Eventos.txt");
 
-    // Check if the file is successfully opened
+    // Revisa si el archivo se abrió correctamente
     if (!outputFile.is_open()) {
-        std::cerr << "Error opening the file." << std::endl;
-        return 1; // Return an error code
+        std::cerr << "Error opening the file." << std::endl; // Imprime un mensaje de error en caso de que suceda
+        return 1; 
     }
 
     std::thread hilo1; // Declaración del hilo
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) // Función principal
         std::cout << "error al configurar opciones del socket" << std::endl;
         exit(-1);
     }
-
+    RTU.sin_addr.s_addr = inet_addr(IP);
 
     hilo1 = std::thread(enviar, (void *)0); // Crea el hilo
 
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) // Función principal
     std::cout << "RTU# LED# 0 o 1" << std::endl;
     std::cout << "RTU# LEDIoT 0 o 1" << std::endl;
     std::cout << "Utilizar ! para salir: " << std::endl; 
-    RTU.sin_addr.s_addr = inet_addr(IP);
+    //RTU.sin_addr.s_addr = inet_addr(IP);
     char CONEXION[128]; // Variable para almacenar el mensaje
     
     std::strcpy(CONEXION, "Conexión"); // Copia el mensaje en la variable
@@ -184,15 +184,25 @@ void enviar(void*ptr) // Función para enviar mensajes
             (const struct sockaddr *)&RTU, length);
             if (n < 0) error("ERROR sendto");
         }
-        if((std::strcmp(buffer, "RTU1 LEDIoT 1\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
+        if((std::strcmp(buffer, "RTU1 LEDIoT 1\n")) == 0){ // Verifica si se ingresó el comando para apagar el LEDIOT de la RTU1
             n = sendto(sockfd, buffer, strlen(buffer), 0, 
             (const struct sockaddr *)&RTU, length);
             if (n < 0) error("ERROR sendto");
         }
-        if((std::strcmp(buffer, "RTU1 LEDIoT 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LED2 de la RTU2
+        if((std::strcmp(buffer, "RTU1 LEDIoT 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LEDIOT de la RTU1
             n = sendto(sockfd, buffer, strlen(buffer), 0, 
             (const struct sockaddr *)&RTU, length);
             if (n < 0) error("ERROR sendto");
-        }  
+        } 
+        if((std::strcmp(buffer, "RTU2 LEDIoT 1\n")) == 0){ // Verifica si se ingresó el comando para apagar el LEDIOT de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }
+        if((std::strcmp(buffer, "RTU2 LEDIoT 0\n")) == 0){ // Verifica si se ingresó el comando para apagar el LEDIOT de la RTU2
+            n = sendto(sockfd, buffer, strlen(buffer), 0, 
+            (const struct sockaddr *)&RTU, length);
+            if (n < 0) error("ERROR sendto");
+        }   
     }
 }

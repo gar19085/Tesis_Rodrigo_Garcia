@@ -222,8 +222,8 @@ void agregar_evento(uint8_t evento_id) { // Función para agregar eventos
     numero_eventos++;
 
     // Formato del mensaje
-    std::sprintf(message, "RTU1 %d %s %d %d%d %d%d %d %d%d %0.2f",
-             evento_id, timestamp, static_cast<int>(current_time.tv_usec / 1000),
+    std::sprintf(message, "RTU1 %d %s %d%d %d%d %d %d%d %0.2f",
+             evento_id, timestamp, 
              switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2, voltajeadc);
 
     std::cout << "Mandando Mensaje: " << message << std::endl; // Imprime el mensaje
@@ -301,13 +301,13 @@ int main(int argc, char *argv[]) { // Función principal
         //Condicionales para la alarma con el ADC
         if (voltajeadc < 0.5) {
             if(last_alarm_statusL == 0){
-                agregar_evento(15);
+                agregar_evento(7);
                 last_alarm_statusL = 1;
                 digitalWrite(Alarm, HIGH);
             }
         } else if (voltajeadc > 2.5) {
             if(last_alarm_statusH == 0){
-                agregar_evento(16);
+                agregar_evento(8);
                 last_alarm_statusH = 1;
                 digitalWrite(Alarm, HIGH);
             }

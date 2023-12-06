@@ -20,7 +20,6 @@ void child(){ //Función que se ejecuta en el proceso hijo y realiza la tarea de
 
 int main(){
     int a;
-
     if ((a = fork()) < 0){ //Se crea un nuevo proceso hijo
         std::cout << "fork error \n";
         exit(-1); 

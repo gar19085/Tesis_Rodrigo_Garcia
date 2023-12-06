@@ -224,8 +224,8 @@ void agregar_evento(uint8_t evento_id) {
     numero_eventos++;
 
     // Format the event string using sprintf
-    std::sprintf(message, "RTU1 %d %s %d %d%d %d%d %d %d%d %0.2f",
-             evento_id, timestamp, static_cast<int>(current_time.tv_usec / 1000),
+    std::sprintf(message, "RTU1 %d %s %d%d %d%d %d %d%d %0.2f",
+             evento_id, timestamp, 
              switch1, switch2, PUSH1, PUSH2, status_led_1, LD1, LD2, voltajeadc);
 
     // Print the event string

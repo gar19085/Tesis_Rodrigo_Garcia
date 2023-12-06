@@ -6,15 +6,15 @@
  */
 
 #include <iostream>     // Librería estándar de entrada/salida
-#include <cstdlib>      // Librería estándar para funciones generales (Se incluye para utilizar la función rand)
+#include <cstdlib>      // Librería estándar para funciones generales
 #include <unistd.h>     // Se utiliza para crear nuevos procesos utilizando fork()
 #include <wiringPi.h>   // Librería para controlar pines GPIO
 #include <thread>       // Librería para utilizar hilos
 #include <chrono>       // Librería para manejo de tiempos
 
 
-#define SPKR 22 // Se define el pin 22 para la bocina
-#define BTN1 27 // Se define el pin 27 para el botón
+#define SPKR 22 // Se define el pin para la bocina
+#define BTN1 27 // Se define el pin para el botón
 
 
 

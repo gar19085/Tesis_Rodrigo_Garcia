@@ -63,7 +63,6 @@ int main() {
     digitalWrite(LUZ_P, LOW);
 
     ButtonHandler buttonHandler; // Crea un objeto de la clase ButtonHandler
-
     std::thread polled_thread(polled_scheduling, std::ref(buttonHandler)); // Crea un hilo para el algoritmo de escalonamiento por Poleo
 
     polled_thread.join(); 

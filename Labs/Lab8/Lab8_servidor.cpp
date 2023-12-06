@@ -107,30 +107,6 @@ int main(int argc, char *argv[]){ // Función principal
 
 #endif
 
-#if OPCION_IP == 3
-// ---------- Obtener la dirección IP usando gethostbyname --------------------------
-	struct hostent *he;
-	struct in_addr **addr_list;
-	int i = 0;
-	char hostname[128];
-
-	gethostname(hostname, sizeof hostname);
-
-	if((he = gethostbyname(hostname)) == NULL) {  // Obtener la información del host
-		herror("gethostbyname");
-		return 2;
-	}
-
-
-// Lo siguiente funciona en Cygwin en mi laptop. Puede que en otras computadoras haya más elementos en addr_list.
-	addr_list = (struct in_addr **)he->h_addr_list;
-	strcpy(IP_buffer, inet_ntoa(*addr_list[3])); // i. Habría que ver cuántos elementos hay.
-									// y escoger la opción adecuada. 3 funciona en mi laptop
-	strcpy(IP_broadcast, "192.168.56.255");	// Habría que construir la IP de broadcast a partir
-											// de la propia.
-#endif
-// ----------------------------------------------------------------------------
-
 	std::cout << "Mi IP es: " << IP_buffer << std::endl; // Imprime la dirección IP
 	std::cout << "La dirección de broadcast es: " << IP_broadcast << std::endl; // Imprime la dirección de boradcast
 

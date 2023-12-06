@@ -1,4 +1,3 @@
-//Ayudame a comentar este codigo
 /*
  ============================================================================
  Nombre: Lab6_Timer_functions.cpp
@@ -8,7 +7,7 @@
 
 #include <unistd.h> //Librería que proporciona funciones y constantes específicas de sistemas Unix.
 #include <iostream> //Librería estándar de entrada/salida
-#include <cstdlib> //Librería estándar para funciones generales (Se incluye para utilizar la función rand)
+#include <cstdlib> //Librería estándar para funciones generales
 #include <cstdint> //Librería estándar para tipos de datos enteros
 #include <sys/timerfd.h> //Librería para utilizar el timer
 #include <sched.h> //Librería para utilizar la planificación
